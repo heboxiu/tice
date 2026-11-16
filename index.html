@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏃 国家体质健康测试成绩记录工具</title>
+<script>
+/* ===== SheetJS 多 CDN 回退加载 ===== */
+(function(){
+  var CDNS=[
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+    'https://fastly.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+  ];
+  var i=0;
+  function tryNext(){
+    if(i>=CDNS.length){console.error('❌ 所有 XLSX CDN 均加载失败，Excel 功能不可用（JSON 备份仍可用）');return}
+    var s=document.createElement('script');
+    s.src=CDNS[i++];
+    s.onload=function(){console.log('✅ XLSX 加载成功：'+s.src)};
+    s.onerror=tryNext;
+    document.head.appendChild(s);
+  }
+  tryNext();
+})();
+window.onerror=function(msg,src,line,col){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#e74c3c;color:#fff;padding:10px;font-size:12px;white-space:pre-wrap;';
+  d.textContent='❌ JS错误：'+msg+'（行:'+line+'）';
+  (document.body||document.documentElement).appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},8000);
+};
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft YaHei",sans-serif;background:#f0f4f8;color:#333;font-size:14px}
+header{background:linear-gradient(135deg,#2c7be5,#1a5cb0);color:#fff;padding:18px 24px}
+header h1{font-size:20px}
+header p{opacity:.85;font-size:13px;margin-top:4px}
+.stats{margin-top:10px;display:flex;gap:8px;flex-wrap:nowrap;align-items:center}
+.stats span{background:rgba(255,255,255,.15);border-radius:12px;padding:3px 8px;font-size:12px;white-space:nowrap}
+.cloud-btn{
+  border:none;border-radius:12px;padding:3px 8px;font-size:12px;
+  cursor:pointer;font-family:inherit;color:#fff;white-space:nowrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+.cloud-btn:active{transform:scale(.95)}
+.cloud-btn.up{background:#27ae60}
+.cloud-btn.down{background:#e67e22}
+nav{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-wrap:wrap}
+nav button{flex:1;border:none;background:none;padding:12px;font-size:14px;cursor:pointer;color:#666;border-bottom:3px solid transparent}
+nav button.active{color:#2c7be5;border-bottom-color:#2c7be5;font-weight:bold}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.page{display:none;background:#fff;border-radius:10px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.page.active{display:block}
+h2{font-size:16px;margin-bottom:12px;color:#2c7be5;border-bottom:2px solid #e8eef5;padding-bottom:8px;margin-top:18px}
+h2:first-child{margin-top:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input,select,textarea{padding:7px 10px;border:1px solid #ccd5e0;border-radius:6px;font-size:14px;background:#fff}
+textarea{font-family:inherit;resize:vertical}
+.btn{background:#2c7be5;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:14px}
+.btn:hover{background:#1a5cb0}
+.btn.green{background:#27ae60}.btn.orange{background:#e67e22}.btn.red{background:#e74c3c}
+table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}
+th,td{border:1px solid #dde4ec;padding:6px 8px;text-align:center}
+th{background:#eef3f9;position:relative;white-space:nowrap}
+td input{width:80px;border:1px solid transparent;border-radius:4px;padding:4px;text-align:center;background:#fafbfc}
+td input:focus{border-color:#2c7be5;background:#fff;outline:none}
+td input:disabled{background:#f0f0f0;color:#bbb}
+.del-col{position:absolute;top:2px;right:3px;cursor:pointer;color:#ffdddd;font-weight:bold;padding:0 3px}
+.card{border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px}
+.card h3{font-size:14px;margin-bottom:8px;color:#444}
+.hint{background:#fdf6e3;border:1px solid #f5deb3;border-radius:6px;padding:10px;font-size:13px;color:#8a6d3b;line-height:1.7;margin-bottom:12px}
+
+/* ===== 成绩表 ===== */
+.score-wrap{overflow:auto;max-height:75vh;border:1px solid #e2e8f0;border-radius:8px}
+#scoreTable th{background:#2c7be5;color:#fff;position:relative;white-space:nowrap}
+#scoreTable thead th{position:sticky;top:0;z-index:10}
+#scoreTable td.name-col{position:sticky;left:0;z-index:20;background:#fff;font-weight:bold;border-right:2px solid #ccd5e0}
+#scoreTable thead th.name-col{left:0;top:0;z-index:30;border-right:2px solid #1a5cb0}
+#scoreTable tr.group-row td{background:#eaf2fd;font-weight:bold;color:#2c7be5;text-align:left;padding:4px 8px}
+#scoreTable tr.group-row.girl td{background:#fdeef5;color:#e0568c}
+#scoreTable tbody tr:hover td{background:#f5f9ff}
+#scoreTable tbody tr:hover td.name-col{background:#eef5ff}
+.name-col{min-width:86px}
+td.na{color:#ccc;background:#f7f7f7}
+.m-flag{display:inline-block;font-size:9px;color:#fff;background:#c2185b;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:1px}
+
+.girl{color:#e0568c}.boy{color:#2c7be5}
+.abs-btn{display:inline-block;margin-left:4px;padding:2px 7px;border-radius:5px;border:1px solid #ccd5e0;background:#fff;color:#999;font-size:12px;cursor:pointer;vertical-align:middle}
+.abs-btn.on{background:#e74c3c;border-color:#e74c3c;color:#fff;font-weight:bold}
+.abs-btn.on-m{background:#c2185b;border-color:#c2185b;color:#fff;font-weight:bold}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;display:none;z-index:99999;font-size:13px}
+
+/* ===== 云端历史弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-h{padding:14px 16px;background:#2c7be5;color:#fff;font-size:15px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+.modal-h .x{cursor:pointer;font-size:20px;line-height:1;opacity:.85}
+.modal-b{padding:12px 16px;overflow:auto;font-size:13px;line-height:1.7}
+.snap-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.snap-item .t{color:#444}
+.snap-item button{background:#27ae60;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px}
+.snap-item button:active{transform:scale(.96)}
+.snap-empty{color:#888;text-align:center;padding:12px 0}
+.snap-raw{background:#f6f8fa;border:1px solid #dde4ec;border-radius:6px;padding:8px;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#a00;margin-top:8px}
+.modal-f{padding:10px 16px;border-top:1px solid #e8eef5;text-align:right}
+.modal-f button{background:#e67e22;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer}
+
+/* ===== 评分标准表 ===== */
+.std-block{margin-bottom:24px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.std-title{padding:10px;text-align:center;color:#fff;font-size:15px;font-weight:bold}
+.std-title.boy{background:#2e7d32}
+.std-title.girl{background:#d81b60}
+.score-std{overflow:auto;max-height:72vh;-webkit-overflow-scrolling:touch}
+.score-std table{margin:0;font-size:11px;line-height:1.4;min-width:560px;table-layout:fixed;border-collapse:separate;border-spacing:0;width:100%}
+.score-std th:first-child,.score-std td:first-child{width:22%}
+.score-std th{background:#f5b041;color:#fff;padding:7px 4px;white-space:nowrap}
+.score-std thead th{position:sticky;top:0;z-index:20}
+.score-std td{padding:0;word-break:break-all;word-wrap:break-word;vertical-align:middle;background:#fff;text-align:center}
+.score-std td:first-child{position:sticky;left:0;z-index:10;text-align:center;font-weight:bold;background:#fdf6ec;border-right:2px solid #e8d5b0}
+.score-std thead th:first-child{left:0;z-index:30}
+.score-std .v1,.score-std .v2{display:block;padding:3px 2px}
+.score-std .v1{color:#2e7d32;font-weight:bold;background:#f2f9f0;border-bottom:1px solid #b9d4b1}
+.score-std .v2{color:#b5651d;background:#faf3ea}
+.score-std .g{display:inline-block;font-size:9px;color:#fff;border-radius:3px;padding:0 3px;margin-right:2px;font-weight:normal;vertical-align:1px}
+.score-std .v1 .g{background:#2e7d32}
+.score-std .v2 .g{background:#b5651d}
+.score-std td.pad{padding:6px 2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏃 国家体质健康测试成绩记录工具</h1>
+  <p>班级与学生管理 · 成绩录入 · Excel 导入导出 · 云端同步</p>
+  <div class="stats">
+    <span><b id="stClass">0</b>班级</span>
+    <span><b id="stStu">0</b>学生</span>
+    <span><b id="stScore">0</b>已录成绩</span>
+    <button class="cloud-btn up" onclick="cloudUpload()">↑传</button>
+    <button class="cloud-btn down" onclick="cloudDownload()">↓载</button>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-p="pClass" class="active">班级管理</button>
+  <button data-p="pStu">学生管理</button>
+  <button data-p="pScore">成绩录入</button>
+  <button data-p="pIO">导入 / 导出</button>
+  <button data-p="pHelp">评分标准</button>
+</nav>
+
+<main>
+<div class="page active" id="pClass">
+  <h2>班级列表</h2>
+  <div class="row">
+    <select id="cGrade">
+      <option value="1">一年级</option><option value="2">二年级</option>
+      <option value="3">三年级</option><option value="4">四年级</option>
+      <option value="5">五年级</option><option value="6">六年级</option>
+    </select>
+    <input id="cName" placeholder="班级名称，如：1" style="width:180px">
+    <button class="btn green" onclick="addClass()">＋ 新增班级</button>
+  </div>
+  <table><thead><tr><th>年级</th><th>班级</th><th>学生数</th><th>操作</th></tr></thead>
+  <tbody id="classTb"></tbody></table>
+</div>
+
+<div class="page" id="pStu">
+  <h2>学生名单（<span id="stuCount">0</span>）</h2>
+  <div class="row">
+    <select id="stuClassFilter" onchange="renderStudents()"></select>
+    <button class="btn green" onclick="showStuForm(0)">＋ 新增学生</button>
+    <button class="btn orange" onclick="showStuForm(1)">批量添加</button>
+  </div>
+  <div id="studentForm" style="display:none;flex-wrap:wrap;gap:8px;background:#f8fafc;border:1px dashed #b8c8dc;border-radius:8px;padding:12px;margin-bottom:12px">
+    <input id="sNo" placeholder="学号" style="width:100px">
+    <textarea id="sName" placeholder="姓名" rows="1" style="width:280px"></textarea>
+    <select id="sSex"><option value="男">男</option><option value="女">女</option></select>
+    <input id="sBirth" type="date">
+    <select id="sClass"></select>
+    <button class="btn green" onclick="addStudent()">保存</button>
+  </div>
+  <table><thead><tr><th>班级</th><th>学号</th><th>姓名</th><th>性别</th><th>出生日期</th><th>操作</th></tr></thead>
+  <tbody id="stuTb"></tbody></table>
+</div>
+
+<div class="page" id="pScore">
+  <h2>成绩录入</h2>
+  <div class="row">
+    <select id="scoreClass" onchange="renderScore()"></select>
+    <select id="sexScope"><option value="both">全部学生</option><option value="男">仅男生</option><option value="女">仅女生</option></select>
+    <select id="itemSelect" onchange="onItemSelect(this)"></select>
+    <button class="btn" onclick="fullscreen()">⛶ 全屏</button>
+    <button class="btn green" onclick="saveAndUpload()">💾 保存并上传</button>
+  </div>
+  <div class="hint">💡 名单按<b>男生组/女生组</b>分组；<b>姓名列与表头固定</b>；添加项目时可用<b>范围选择</b>指定生效对象：<b>仅男生</b>添加后女生侧暂为空白，之后再为女生添加同项即生效并记录女生侧日期（男/女日期独立）；重复添加自动编号 <b>(2)(3)(4)…</b>；点“缺”标记缺勤（红，<b>锁定录入</b>）；女生可点“M”标记经期（玫红角标，<b>不锁定，可与成绩同时存在</b>，与缺勤互斥）；身高+体重自动算 BMI；<b>输入后自动保存本机并同步云端</b>（未配置云端地址时仅存本机）。</div>
+  <div class="score-wrap"><table id="scoreTable"></table></div>
+</div>
+
+<div class="page" id="pIO">
+  <h2>📥 导入数据</h2>
+  <div class="card"><h3>导入学生名单（Excel/CSV）</h3>
+    <input type="file" id="impStu" accept=".xlsx,.xls,.csv"></div>
+  <div class="card"><h3>导入成绩记录（Excel/CSV）</h3>
+    <input type="file" id="impScore" accept=".xlsx,.xls,.csv"></div>
+  <div class="card"><h3>恢复数据备份（JSON，兼容旧版）</h3>
+    <input type="file" id="impJson" accept=".json"></div>
+  <h2>📤 导出数据</h2>
+  <div class="row">
+    <button class="btn green" onclick="exportStudents()">学生名单</button>
+    <button class="btn green" onclick="exportScores()">成绩记录</button>
+    <button class="btn green" onclick="exportJSON()">完整备份(JSON)</button>
+  </div>
+  <div class="card"><h3>导出指定班级</h3>
+    <div class="row" style="margin-bottom:0">
+      <select id="expClass" style="min-width:180px"></select>
+      <button class="btn green" onclick="exportClassStudents()">该班名单</button>
+      <button class="btn green" onclick="exportClassScores()">该班成绩</button>
+    </div>
+  </div>
+  <div class="row">
+    <button class="btn orange" onclick="downloadTemplate(0)">名单模板</button>
+    <button class="btn orange" onclick="downloadTemplate(1)">成绩模板</button>
+    <button class="btn red" onclick="clearAll()">清空全部数据</button>
+  </div>
+  <h2>☁️ 云端存储</h2>
+  <div class="card">
+    <div class="row">
+      <input id="apiUrl" placeholder="https://data.123.com/" style="flex:1;min-width:240px">
+      <button class="btn orange" onclick="saveApiUrl()">保存地址</button>
+    </div>
+    <div class="row">
+      <button class="btn green" onclick="cloudUpload()">⬆ 上传到云端</button>
+      <button class="btn" onclick="cloudDownload()">⬇ 从云端下载</button>
+      <button class="btn" onclick="cloudHistory()">☁️ 云端历史</button>
+    </div>
+    <p style="font-size:12px;color:#888;margin-top:8px;line-height:1.7">服务端（Cloudflare Worker + KV）<b>每 10 次上传自动留一份快照</b>（保留30份），下载的旧格式数据自动迁移。录入时自动保存+自动同步云端；断网时挂起，网络恢复自动补传。</p>
+  </div>
+</div>
+
+<div class="page" id="pHelp">
+  <h2>《国家学生体质健康标准评分表》小学段</h2>
+
+  <div class="std-block">
+    <div class="std-title boy">男生单项评分表</div>
+    <div class="score-std">
+      <table>
+        <thead><tr><th>测试项目</th><th>一年级</th><th>二年级</th><th>三年级</th><th>四年级</th><th>五年级</th><th>六年级</th></tr></thead>
+        <tbody>
+          <tr><td>体重指数 BMI<br>（kg/m²）</td>
+            <td><span class="v1"><span class="g">100分</span>13.5~18.1</span><span class="v2"><span class="g">80分</span>≤13.4<br>18.2~20.3</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.7~18.4</span><span class="v2"><span class="g">80分</span>≤13.6<br>18.5~20.4</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.9~19.4</span><span class="v2"><span class="g">80分</span>≤13.8<br>19.5~22.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>14.2~20.1</span><span class="v2"><span class="g">80分</span>≤14.1<br>20.2~22.6</span></td>
+            <td><span class="v1"><span class="g">100分</span>14.4~21.4</span><span class="v2"><span class="g">80分</span>≤14.3<br>21.5~24.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>14.7~21.8</span><span class="v2"><span class="g">80分</span>≤14.6<br>21.9~24.5</span></td></tr>
+          <tr><td>肺活量<br>（毫升）</td>
+            <td><span class="v1"><span class="g">100分</span>1700</span><span class="v2"><span class="g">80分</span>1300</span></td>
+            <td><span class="v1"><span class="g">100分</span>2000</span><span class="v2"><span class="g">80分</span>1500</span></td>
+            <td><span class="v1"><span class="g">100分</span>2300</span><span class="v2"><span class="g">80分</span>1700</span></td>
+            <td><span class="v1"><span class="g">100分</span>2600</span><span class="v2"><span class="g">80分</span>1900</span></td>
+            <td><span class="v1"><span class="g">100分</span>2900</span><span class="v2"><span class="g">80分</span>2200</span></td>
+            <td><span class="v1"><span class="g">100分</span>3200</span><span class="v2"><span class="g">80分</span>2500</span></td></tr>
+          <tr><td>50米跑<br>（秒）</td>
+            <td><span class="v1"><span class="g">100分</span>10.2</span><span class="v2"><span class="g">80分</span>10.6</span></td>
+            <td><span class="v1"><span class="g">100分</span>9.6</span><span class="v2"><span class="g">80分</span>10</span></td>
+            <td><span class="v1"><span class="g">100分</span>9.1</span><span class="v2"><span class="g">80分</span>9.5</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.7</span><span class="v2"><span class="g">80分</span>9.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.4</span><span class="v2"><span class="g">80分</span>8.8</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.2</span><span class="v2"><span class="g">80分</span>8.6</span></td></tr>
+          <tr><td>坐位体前屈<br>（厘米）</td>
+            <td><span class="v1"><span class="g">100分</span>16.1</span><span class="v2"><span class="g">80分</span>11</span></td>
+            <td><span class="v1"><span class="g">100分</span>16.2</span><span class="v2"><span class="g">80分</span>10.6</span></td>
+            <td><span class="v1"><span class="g">100分</span>16.3</span><span class="v2"><span class="g">80分</span>10.2</span></td>
+            <td><span class="v1"><span class="g">100分</span>16.4</span><span class="v2"><span class="g">80分</span>9.8</span></td>
+            <td><span class="v1"><span class="g">100分</span>16.5</span><span class="v2"><span class="g">80分</span>9.4</span></td>
+            <td><span class="v1"><span class="g">100分</span>16.6</span><span class="v2"><span class="g">80分</span>9</span></td></tr>
+          <tr><td>一分钟跳绳<br>（次）</td>
+            <td><span class="v1"><span class="g">100分</span>109</span><span class="v2"><span class="g">80分</span>87</span></td>
+            <td><span class="v1"><span class="g">100分</span>117</span><span class="v2"><span class="g">80分</span>95</span></td>
+            <td><span class="v1"><span class="g">100分</span>126</span><span class="v2"><span class="g">80分</span>104</span></td>
+            <td><span class="v1"><span class="g">100分</span>137</span><span class="v2"><span class="g">80分</span>115</span></td>
+            <td><span class="v1"><span class="g">100分</span>148</span><span class="v2"><span class="g">80分</span>126</span></td>
+            <td><span class="v1"><span class="g">100分</span>157</span><span class="v2"><span class="g">80分</span>135</span></td></tr>
+          <tr><td>一分钟仰卧起坐<br>（次）</td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>48</span><span class="v2"><span class="g">80分</span>36</span></td>
+            <td><span class="v1"><span class="g">100分</span>49</span><span class="v2"><span class="g">80分</span>37</span></td>
+            <td><span class="v1"><span class="g">100分</span>50</span><span class="v2"><span class="g">80分</span>38</span></td>
+            <td><span class="v1"><span class="g">100分</span>51</span><span class="v2"><span class="g">80分</span>39</span></td></tr>
+          <tr><td>耐力跑·50米×8<br>往返跑（分·秒）</td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>1'36"</span><span class="v2"><span class="g">80分</span>1'48"</span></td>
+            <td><span class="v1"><span class="g">100分</span>1'30"</span><span class="v2"><span class="g">80分</span>1'42"</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="std-block">
+    <div class="std-title girl">女生单项评分表</div>
+    <div class="score-std">
+      <table>
+        <thead><tr><th>测试项目</th><th>一年级</th><th>二年级</th><th>三年级</th><th>四年级</th><th>五年级</th><th>六年级</th></tr></thead>
+        <tbody>
+          <tr><td>体重指数 BMI<br>（kg/m²）</td>
+            <td><span class="v1"><span class="g">100分</span>13.3~17.3</span><span class="v2"><span class="g">80分</span>≤13.2<br>17.4~19.2</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.5~17.8</span><span class="v2"><span class="g">80分</span>≤13.4<br>17.9~20.2</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.6~18.6</span><span class="v2"><span class="g">80分</span>≤13.5<br>18.7~21.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.7~19.4</span><span class="v2"><span class="g">80分</span>≤13.6<br>19.5~22.0</span></td>
+            <td><span class="v1"><span class="g">100分</span>13.8~20.5</span><span class="v2"><span class="g">80分</span>≤13.7<br>20.6~22.9</span></td>
+            <td><span class="v1"><span class="g">100分</span>14.2~20.8</span><span class="v2"><span class="g">80分</span>≤14.1<br>20.9~23.6</span></td></tr>
+          <tr><td>肺活量<br>（毫升）</td>
+            <td><span class="v1"><span class="g">100分</span>1400</span><span class="v2"><span class="g">80分</span>1000</span></td>
+            <td><span class="v1"><span class="g">100分</span>1600</span><span class="v2"><span class="g">80分</span>1200</span></td>
+            <td><span class="v1"><span class="g">100分</span>1800</span><span class="v2"><span class="g">80分</span>1400</span></td>
+            <td><span class="v1"><span class="g">100分</span>2000</span><span class="v2"><span class="g">80分</span>1600</span></td>
+            <td><span class="v1"><span class="g">100分</span>2250</span><span class="v2"><span class="g">80分</span>1850</span></td>
+            <td><span class="v1"><span class="g">100分</span>2500</span><span class="v2"><span class="g">80分</span>2100</span></td></tr>
+          <tr><td>50米跑<br>（秒）</td>
+            <td><span class="v1"><span class="g">100分</span>11</span><span class="v2"><span class="g">80分</span>11.8</span></td>
+            <td><span class="v1"><span class="g">100分</span>10</span><span class="v2"><span class="g">80分</span>10.8</span></td>
+            <td><span class="v1"><span class="g">100分</span>9.2</span><span class="v2"><span class="g">80分</span>10</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.7</span><span class="v2"><span class="g">80分</span>9.5</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.4</span><span class="v2"><span class="g">80分</span>9.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>8.2</span><span class="v2"><span class="g">80分</span>9</span></td></tr>
+          <tr><td>坐位体前屈<br>（厘米）</td>
+            <td><span class="v1"><span class="g">100分</span>18.6</span><span class="v2"><span class="g">80分</span>13.4</span></td>
+            <td><span class="v1"><span class="g">100分</span>18.9</span><span class="v2"><span class="g">80分</span>13.3</span></td>
+            <td><span class="v1"><span class="g">100分</span>19.2</span><span class="v2"><span class="g">80分</span>13.2</span></td>
+            <td><span class="v1"><span class="g">100分</span>19.5</span><span class="v2"><span class="g">80分</span>13.1</span></td>
+            <td><span class="v1"><span class="g">100分</span>19.8</span><span class="v2"><span class="g">80分</span>13</span></td>
+            <td><span class="v1"><span class="g">100分</span>19.9</span><span class="v2"><span class="g">80分</span>12.9</span></td></tr>
+          <tr><td>一分钟跳绳<br>（次）</td>
+            <td><span class="v1"><span class="g">100分</span>117</span><span class="v2"><span class="g">80分</span>87</span></td>
+            <td><span class="v1"><span class="g">100分</span>127</span><span class="v2"><span class="g">80分</span>97</span></td>
+            <td><span class="v1"><span class="g">100分</span>139</span><span class="v2"><span class="g">80分</span>109</span></td>
+            <td><span class="v1"><span class="g">100分</span>149</span><span class="v2"><span class="g">80分</span>119</span></td>
+            <td><span class="v1"><span class="g">100分</span>158</span><span class="v2"><span class="g">80分</span>128</span></td>
+            <td><span class="v1"><span class="g">100分</span>166</span><span class="v2"><span class="g">80分</span>136</span></td></tr>
+          <tr><td>一分钟仰卧起坐<br>（次）</td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>46</span><span class="v2"><span class="g">80分</span>36</span></td>
+            <td><span class="v1"><span class="g">100分</span>47</span><span class="v2"><span class="g">80分</span>37</span></td>
+            <td><span class="v1"><span class="g">100分</span>48</span><span class="v2"><span class="g">80分</span>38</span></td>
+            <td><span class="v1"><span class="g">100分</span>49</span><span class="v2"><span class="g">80分</span>39</span></td></tr>
+          <tr><td>耐力跑·50米×8<br>往返跑（分·秒）</td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>——</span><span class="v2"><span class="g">80分</span>——</span></td>
+            <td><span class="v1"><span class="g">100分</span>1'41"</span><span class="v2"><span class="g">80分</span>1'53"</span></td>
+            <td><span class="v1"><span class="g">100分</span>1'37"</span><span class="v2"><span class="g">80分</span>1'49"</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p style="text-align:center;color:#b5651d;font-size:13px;margin-top:8px">国家学生体质健康标准 · 小学段（上区=100分标准，下区=80分标准）</p>
+
+  <h2 style="margin-top:28px">📋 小学生体测及格线总表（参考值）</h2>
+  <div class="std-block">
+    <div class="std-title" style="background:#e67e22">体测及格线总表 · 跑类≤该数达标，跳远类≥该数达标</div>
+    <div class="score-std">
+      <table>
+        <thead><tr><th>测试项目</th><th>一年级</th><th>二年级</th><th>三年级</th><th>四年级</th><th>五年级</th><th>六年级</th></tr></thead>
+        <tbody>
+          <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#e8f5e9;color:#2e7d32;padding:5px 8px"> 男 生</td></tr>
+          <tr>
+            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
+          </tr>
+          <tr>
+            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
+          </tr>          
+          <tr>
+            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
+          </tr>
+          <tr>
+            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">35</td>
+          </tr>
+          <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
+          <tr>
+          <tr>
+            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">2.0</td><td class="pad">2.1</td><td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td>
+          </tr>
+          <tr>
+            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">100</td><td class="pad">110</td><td class="pad">118</td><td class="pad">125</td><td class="pad">132</td><td class="pad">140</td>
+          </tr>
+            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
+          </tr>
+            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">40</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p style="text-align:center;color:#b5651d;font-size:12px;margin-top:-10px;margin-bottom:16px">备注：以上均为参考值（非官方国标项目），跑类≤该数达标，跳远类≥该数达标。正式评价请以学校标准为准。</p>
+</div>
+</main>
+
+<!-- 云端历史弹窗 -->
+<div class="modal-mask" id="histMask">
+  <div class="modal">
+    <div class="modal-h"><span>☁️ 云端历史快照</span><span class="x" onclick="closeHist()">×</span></div>
+    <div class="modal-b" id="histBody"></div>
+    <div class="modal-f"><button onclick="closeHist()">关闭</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ================= localStorage 安全包装 ================= */
+var _mem={};
+var LS={
+  get:function(k){try{return localStorage.getItem(k)}catch(e){return _mem[k]||null}},
+  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){_mem[k]=v}},
+  keys:function(){
+    try{var a=[];for(var i=0;i<localStorage.length;i++)a.push(localStorage.key(i));return a}
+    catch(e){return Object.keys(_mem)}
+  },
+  isMem:function(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return false}catch(e){return true}}
+};
+
+/* ★ 一次性迁移 */
+(function(){
+  var OLD_KEYS=['FITNESS_DATA','fitness_data','PE_DATA','pe_data','FITNESS_DATA_V1','fitnessData'];
+  function isEmptyDB(txt){
+    if(!txt)return true;
+    try{
+      var d=JSON.parse(txt);
+      if(!d||typeof d!=='object')return true;
+      var hasC=d.classes&&d.classes.length>0;
+      var hasS=d.students&&d.students.length>0;
+      var hasSc=d.scores&&Object.keys(d.scores).length>0;
+      return !(hasC||hasS||hasSc);
+    }catch(e){return false}
+  }
+  try{
+    if(!isEmptyDB(localStorage.getItem('pe_tool_v1')))return;
+    for(var j=0;j<OLD_KEYS.length;j++){
+      var k=OLD_KEYS[j];
+      if(k==='pe_tool_v1')continue;
+      var old=localStorage.getItem(k);
+      if(!old)continue;
+      if(!isEmptyDB(old)){
+        localStorage.setItem('pe_tool_v1',old);
+        setTimeout(function(){alert('✅ 检测到旧版数据，已自动迁移到新版存储')},300);
+        return;
+      }
+    }
+  }catch(e){}
+})();
+
+/* ================= 基础数据 ================= */
+var DB_KEY='pe_tool_v1', SEL_KEY='pe_sel_v1', API_KEY='pe_api_url';
+var GR=['','一','二','三','四','五','六'];
+var ITEM_MAP={'run50':'50米跑','rope':'1分钟跳绳','run50x8':'50米×8往返跑','run50x8_2':'50米×8往返跑(2)','abs':'1分钟仰卧起坐','height':'身高','weight':'体重','lung':'肺活量','sitreach':'坐位体前屈'};
+
+function emptyDB(){return {classes:[],students:[],scores:{},customItems:[]}}
+
+function loadDB(){
+  try{
+    var d=JSON.parse(LS.get(DB_KEY));
+    if(!d||typeof d!=='object')return emptyDB();
+    return d;
+  }catch(e){return emptyDB()}
+}
+var db=loadDB();
+migrate();
+persist();
+
+/* ================= 旧版数据迁移 ================= */
+function migrate(){
+  if(!db||typeof db!=='object')db=emptyDB();
+  if(!Array.isArray(db.classes))db.classes=[];
+  if(!Array.isArray(db.students))db.students=[];
+  if(!db.scores||typeof db.scores!=='object')db.scores={};
+  if(!Array.isArray(db.customItems))db.customItems=[];
+
+  db.classes.forEach(function(c){
+    if(!c.id)c.id=uid('c');
+    c.grade=+c.grade||1;
+    if(!c.name)c.name=String(c.grade);
+  });
+  var clsMap={};db.classes.forEach(function(c){clsMap[c.id]=c});
+
+  var stuMap={};
+  db.students.forEach(function(s){
+    if(!s.id)s.id=uid('s');
+    stuMap[s.id]=s;
+    if(!s.name&&s.studentName)s.name=s.studentName;
+    var g=String(s.gender!=null?s.gender:(s.sex!=null?s.sex:'男')).trim().toLowerCase();
+    s.sex=(g.indexOf('女')>-1||g==='f'||g==='female'||g==='0'||g==='2')?'女':'男';
+    delete s.gender;
+    if(!s.no)s.no='';
+    if(!s.birth)s.birth='';
+    if(!s.classId||!clsMap[s.classId]){
+      var hit=null;
+      db.classes.forEach(function(c){if(c.name===s.classId)hit=c});
+      s.classId=hit?hit.id:(db.classes.length?db.classes[0].id:'');
+    }
+  });
+
+  var ns={};
+  Object.keys(db.scores).forEach(function(k){
+    var rec=db.scores[k];
+    if(!rec||typeof rec!=='object')return;
+    if(stuMap[k]){
+      var cid=stuMap[k].classId;
+      if(!cid)return;
+      ns[cid]=ns[cid]||{};
+      ns[cid][k]=mergeClean(ns[cid][k],rec);
+    }else if(clsMap[k]){
+      Object.keys(rec).forEach(function(sid){
+        if(!stuMap[sid])return;
+        var r=rec[sid];
+        if(!r||typeof r!=='object')return;
+        ns[k]=ns[k]||{};
+        ns[k][sid]=mergeClean(ns[k][sid],r);
+      });
+    }
+  });
+  db.scores=ns;
+
+  if(db.selected&&!LS.get(SEL_KEY)){
+    var sel={};
+    Object.keys(db.selected).forEach(function(cid){
+      if(!clsMap[cid])return;
+      sel[cid]=db.selected[cid].map(function(o){
+        var name=(o&&o.k)?(ITEM_MAP[o.k]||o.k):(ITEM_MAP[o]||o);
+        return {name:name,date:''};
+      });
+    });
+    try{LS.set(SEL_KEY,JSON.stringify(sel))}catch(e){}
+  }
+  delete db.selected;
+}
+function mergeClean(target,rec){
+  var out=target||{};
+  Object.keys(rec).forEach(function(code){
+    var v=rec[code];
+    if(code==='abs'){
+      if(v&&typeof v==='object'){
+        Object.keys(v).forEach(function(c2){
+          if(v[c2]){
+            var nm=ITEM_MAP[c2]||c2;
+            if(out[nm]===undefined||out[nm]==='')out[nm]='缺';
+          }
+        });
+      }
+      return;
+    }
+    if(v&&typeof v==='object')return;
+    if(v===''||v==null)return;
+    var nm2=ITEM_MAP[code]||code;
+    if(out[nm2]===undefined||out[nm2]==='')out[nm2]=v;
+  });
+  return out;
+}
+
+function persist(){
+  try{LS.set(DB_KEY,JSON.stringify(db))}
+  catch(e){alert('保存失败，请导出备份')}
+  updateStats();
+}
+function saveDB(t){persist();if(t)toast('✅ 已保存')}
+
+/* ================= 工具 ================= */
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function clsById(id){for(var i=0;i<db.classes.length;i++)if(db.classes[i].id===id)return db.classes[i];return null}
+function clsLabel(c){if(!c)return'';return /^\d+$/.test(c.name)?(GR[c.grade]+'年级'+c.name+'班'):(GR[c.grade]+'年级·'+c.name)}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},2200)}
+function itemsByGrade(g){var b=['身高','体重','肺活量','50米跑','坐位体前屈','1分钟跳绳'];if(g>=3)b.push('1分钟仰卧起坐');if(g>=5)b.push('50米×8往返跑');return b}
+function sortGender(list){var o={'男':0,'女':1};return list.slice().sort(function(a,b){var d=(o[a.sex]||0)-(o[b.sex]||0);return d||String(a.name).localeCompare(String(b.name),'zh')})}
+function todayStr(){var d=new Date(),p=function(n){return(n<10?'0':'')+n};return p(d.getMonth()+1)+'-'+p(d.getDate())}
+function needXLSX(){
+  if(typeof XLSX==='undefined'){
+    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
+    return true;
+  }
+  return false;
+}
+
+/* ================= 导航 ================= */
+document.getElementById('nav').addEventListener('click',function(e){
+  if(e.target.tagName!=='BUTTON')return;
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  e.target.classList.add('active');
+  document.getElementById(e.target.dataset.p).classList.add('active');
+});
+
+/* ================= 班级 ================= */
+function addClass(){
+  var n=document.getElementById('cName').value.trim();
+  if(!n){alert('请输入班级名称');return}
+  db.classes.push({id:uid('c'),grade:+document.getElementById('cGrade').value,name:n});
+  document.getElementById('cName').value='';
+  saveDB(true);renderClasses();fillSelects();
+}
+function delClass(id){
+  var n=db.students.filter(function(s){return s.classId===id}).length;
+  if(!confirm('删除该班级将同时删除 '+n+' 名学生及全部成绩，确定？'))return;
+  db.classes=db.classes.filter(function(c){return c.id!==id});
+  db.students=db.students.filter(function(s){return s.classId!==id});
+  delete db.scores[id];
+  try{var s=getSel();delete s[id];setSel(s)}catch(e){}
+  saveDB(true);renderClasses();fillSelects();
+}
+function renderClasses(){
+  var h='';
+  db.classes.forEach(function(c){
+    var n=db.students.filter(function(s){return s.classId===c.id}).length;
+    h+='<tr><td>'+GR[c.grade]+'年级</td><td>'+esc(c.name)+'</td><td>'+n+
+       '</td><td><button class="btn red" style="padding:4px 10px" onclick="delClass(\''+c.id+'\')">删除</button></td></tr>';
+  });
+  document.getElementById('classTb').innerHTML=h;
+}
+function fillSelects(){
+  var h=db.classes.map(function(c){return '<option value="'+c.id+'">'+esc(clsLabel(c))+'</option>'}).join('');
+  if(!h)h='<option value="">（请先创建班级）</option>';
+  ['scoreClass','sClass','expClass'].forEach(function(id){
+    var s=document.getElementById(id),v=s.value;s.innerHTML=h;if(v)s.value=v;
+  });
+  var f=document.getElementById('stuClassFilter'),fv=f.value;
+  f.innerHTML='<option value="">全部班级</option>'+h;
+  f.value=fv;
+  renderStudents();renderScore();
+}
+
+/* ================= 学生 ================= */
+var _editId=null;
+function editStudent(id){
+  var s=null;
+  db.students.forEach(function(x){if(x.id===id)s=x});
+  if(!s)return;
+  _editId=id;
+  showStuForm(0);
+  document.getElementById('sNo').value=s.no||'';
+  document.getElementById('sName').value=s.name||'';
+  document.getElementById('sSex').value=s.sex||'男';
+  document.getElementById('sBirth').value=s.birth||'';
+  document.getElementById('sClass').value=s.classId||'';
+  var btn=document.querySelector('#studentForm .btn.green');
+  btn.textContent='💾 保存修改';
+  btn.style.background='#e67e22';
+  document.getElementById('sName').focus();
+}
+function resetStuForm(){
+  _editId=null;
+  var btn=document.querySelector('#studentForm .btn.green');
+  btn.textContent='保存';
+  btn.style.background='';
+  document.getElementById('sNo').value='';
+  document.getElementById('sName').value='';
+  document.getElementById('sBirth').value='';
+}
+
+var _batch=0;
+function showStuForm(b){
+  resetStuForm();
+  _batch=b;
+  var nm=document.getElementById('sName');
+  document.getElementById('studentForm').style.display='flex';
+  document.getElementById('sNo').style.display=b?'none':'';
+  document.getElementById('sBirth').style.display=b?'none':'';
+  if(b){
+    nm.rows=6;
+    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n张三 女\n李四 男\n王五\n\n（性别可省略，省略时用左侧选择的性别）';
+  }else{
+    nm.rows=1;
+    nm.placeholder='姓名';
+  }
+}
+function addStudent(){
+  var cid=document.getElementById('sClass').value;
+  if(!cid){alert('请先创建班级');return}
+  var nm=document.getElementById('sName').value;
+  if(_batch){
+    var c=0;
+    var defSex=document.getElementById('sSex').value;
+    nm.split('\n').map(function(l){return l.trim()}).filter(Boolean).forEach(function(line){
+      line=line.replace(/^\d+[.、:：\s]+/,'').trim();
+      var sex=defSex;
+      if(/女/.test(line))sex='女';
+      else if(/男/.test(line))sex='男';
+      var nmPart=line.replace(/男|女/g,' ').replace(/[,，\t]/g,' ').trim();
+      var name=nmPart.split(/\s+/).sort(function(a,b){return b.length-a.length})[0]||'';
+      if(!name)return;
+      db.students.push({id:uid('s'),classId:cid,no:'',name:name,sex:sex,birth:''});
+      c++;
+    });
+    if(!c){alert('请按格式粘贴，每行一个学生姓名（可带性别）');return}
+    document.getElementById('sName').value='';
+  }else{
+    var name=nm.trim();
+    if(!name){alert('请输入姓名');return}
+    var info={classId:cid,no:document.getElementById('sNo').value.trim(),name:name,
+              sex:document.getElementById('sSex').value,birth:document.getElementById('sBirth').value};
+    if(_editId){
+      var old=null;
+      db.students.forEach(function(x){if(x.id===_editId)old=x});
+      if(old&&old.classId!==cid){
+        if(db.scores[old.classId]&&db.scores[old.classId][_editId]){
+          db.scores[cid]=db.scores[cid]||{};
+          db.scores[cid][_editId]=db.scores[old.classId][_editId];
+          delete db.scores[old.classId][_editId];
+        }
+      }
+      Object.assign(old,info);
+      toast('✅ 已保存修改');
+      resetStuForm();
+    }else{
+      db.students.push(Object.assign({id:uid('s')},info));
+      document.getElementById('sNo').value='';document.getElementById('sName').value='';document.getElementById('sBirth').value='';
+    }
+  }
+  saveDB(true);renderStudents();
+}
+document.getElementById('sName').addEventListener('keydown',function(e){
+  if(!_batch&&e.key==='Enter'){
+    e.preventDefault();
+    addStudent();
+  }
+});
+function delStudent(id){
+  if(!confirm('确定删除该学生及其成绩？'))return;
+  db.students=db.students.filter(function(s){return s.id!==id});
+  Object.keys(db.scores).forEach(function(cid){if(db.scores[cid])delete db.scores[cid][id]});
+  saveDB(true);renderStudents();
+}
+function renderStudents(){
+  var f=document.getElementById('stuClassFilter').value;
+  var list=sortGender(db.students.filter(function(s){return !f||s.classId===f}));
+  var m=list.filter(function(s){return s.sex==='男'}).length;
+  var w=list.filter(function(s){return s.sex==='女'}).length;
+  document.getElementById('stuCount').textContent=list.length+' 人（男 '+m+' / 女 '+w+'）';
+  var h='',last=null;
+  list.forEach(function(s){
+    if(s.sex!==last){
+      last=s.sex;
+      h+='<tr><td colspan="6" style="background:'+(s.sex==='女'?'#fdeef5;color:#e0568c':'#eaf2fd;color:#2c7be5')+';font-weight:bold;text-align:left"> '+s.sex+'生（'+(s.sex==='男'?m:w)+' 人）</td></tr>';
+    }
+    var c=clsById(s.classId);
+    h+='<tr><td>'+esc(clsLabel(c))+'</td><td>'+esc(s.no)+'</td><td>'+esc(s.name)+
+       '</td><td class="'+(s.sex==='女'?'girl':'boy')+'">'+esc(s.sex)+'</td><td>'+esc(s.birth)+
+       '</td><td><button class="btn" style="padding:4px 10px" onclick="editStudent(\''+s.id+'\')">编辑</button> '+
+       '<button class="btn red" style="padding:4px 10px" onclick="delStudent(\''+s.id+'\')">删除</button></td></tr>';
+  });
+  document.getElementById('stuTb').innerHTML=h;
+}
+
+/* ================= 成绩录入 ================= */
+function getSel(){
+  var s={};
+  try{
+    var raw=JSON.parse(LS.get(SEL_KEY))||{};
+    Object.keys(raw).forEach(function(cid){
+      var seen={};
+      s[cid]=(raw[cid]||[]).map(function(it){
+        if(typeof it==='string')it={name:it,date:''};
+        if(!it.k)it.k=it.name;
+        if(it.sex){
+          if(it.sex==='男'&&!it.dateM)it.dateM=it.date||'';
+          else if(it.sex==='女'&&!it.dateF)it.dateF=it.date||'';
+          else{if(!it.dateM)it.dateM=it.date||'';if(!it.dateF)it.dateF=it.date||''}
+        }else{
+          if(it.dateM===undefined)it.dateM=it.date||'';
+          if(it.dateF===undefined)it.dateF=it.date||'';
+        }
+        delete it.sex;delete it.date;
+        if(seen[it.k])it.k=it.k+'_'+cid+'_'+Math.random().toString(36).slice(2,6);
+        seen[it.k]=1;
+        return it;
+      });
+    });
+  }catch(e){}
+  return s;
+}
+function setSel(s){try{LS.set(SEL_KEY,JSON.stringify(s))}catch(e){}}
+
+function refreshItemSelect(){
+  var sel=document.getElementById('itemSelect');
+  var c=clsById(document.getElementById('scoreClass').value);
+  var items=c?itemsByGrade(c.grade):[];
+  var custom=db.customItems||[];
+  var h='<option value="">— 点击添加项目 —</option>';
+  items.forEach(function(i){h+='<option value="'+esc(i)+'">'+esc(i)+'</option>'});
+  custom.forEach(function(i){h+='<option value="c:'+esc(i)+'">'+esc(i)+'（自定义）</option>'});
+  h+='<option value="__add__">➕ 新增自定义项目…</option>';
+  sel.innerHTML=h;sel.value='';
+}
+function onItemSelect(sel){
+  if(sel.value==='__add__'){
+    var v=prompt('输入自定义项目名称（可多个，逗号分隔）：');
+    if(v&&v.trim()){
+      v.split(/[,，、]/).map(function(s){return s.trim()}).filter(Boolean).forEach(function(n){
+        if(db.customItems.indexOf(n)===-1)db.customItems.push(n);
+      });
+      persist();
+    }
+    refreshItemSelect();return;
+  }
+  if(!sel.value)return;
+  var val=sel.value.indexOf('c:')===0?sel.value.slice(2):sel.value;
+  var scope=document.getElementById('sexScope').value;
+  var cid=document.getElementById('scoreClass').value;
+  var s=getSel();
+  s[cid]=s[cid]||[];
+
+  var base=val.replace(/\(\d+\)$/,'');
+  var col=null;
+  s[cid].forEach(function(c){
+    if(!col && (c.name===base || c.name.replace(/\(\d+\)$/,'')===base))col=c;
+  });
+
+  if(col){
+    var d=todayStr(),changed=false;
+    if(scope==='男'&&!col.dateM){col.dateM=d;changed=true}
+    else if(scope==='女'&&!col.dateF){col.dateF=d;changed=true}
+    else if(scope==='both'){
+      if(!col.dateM){col.dateM=d;changed=true}
+      if(!col.dateF){col.dateF=d;changed=true}
+    }
+    setSel(s);refreshItemSelect();renderScore();
+    if(!changed)toast('ℹ️ 该项目此侧日期已存在，未重复添加');
+    else toast('✅ 已为'+(scope==='both'?'全部学生':scope+'生')+'启用「'+base+'」，日期 '+d);
+    return;
+  }
+
+  var n=s[cid].filter(function(c){
+    return c.name===base || c.name.replace(/\(\d+\)$/,'')===base;
+  }).length;
+  var disp=(n>0)?base+'('+(n+1)+')':base;
+  var d2=todayStr();
+  var col2={name:disp,k:disp+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
+  if(scope==='男')col2.dateM=d2;
+  else if(scope==='女')col2.dateF=d2;
+  else{col2.dateM=d2;col2.dateF=d2}
+  s[cid].push(col2);
+
+  setSel(s);refreshItemSelect();renderScore();
+}
+function removeCol(cid,idx){
+  var s=getSel();if(!s[cid])return;
+  s[cid].splice(idx,1);setSel(s);renderScore();
+}
+
+function renderScore(){
+  refreshItemSelect();
+  var cid=document.getElementById('scoreClass').value;
+  var tbl=document.getElementById('scoreTable');tbl.innerHTML='';
+  if(!cid)return;
+  var cols=getSel()[cid]||[];
+  var list=sortGender(db.students.filter(function(s){return s.classId===cid}));
+  var m=list.filter(function(s){return s.sex==='男'}).length;
+  var w=list.filter(function(s){return s.sex==='女'}).length;
+
+  var h='<thead><tr><th class="name-col">姓名</th><th>性别</th>';
+  cols.forEach(function(c,i){
+    var dt='';
+    if(c.dateM&&c.dateF&&c.dateM!==c.dateF)dt='<br><span style="color:#9ec5f8;font-size:11px;font-weight:normal">男'+esc(c.dateM)+' / 女'+esc(c.dateF)+'</span>';
+    else if(c.dateM||c.dateF)dt='<br><span style="color:#9ec5f8;font-size:11px;font-weight:normal">'+esc(c.dateM||c.dateF)+'</span>';
+    h+='<th>'+esc(c.name)+dt+
+       '<span class="del-col" onclick="removeCol(\''+cid+'\','+i+')">×</span></th>';
+  });
+  h+='</tr></thead><tbody>';
+  var last=null;
+  list.forEach(function(s){
+    if(s.sex!==last){
+      last=s.sex;
+      h+='<tr class="group-row'+(s.sex==='女'?' girl':'')+'"><td colspan="'+(2+cols.length)+'"> '+s.sex+'生（'+(s.sex==='男'?m:w)+' 人）</td></tr>';
+    }
+    h+='<tr><td class="name-col">'+esc(s.name)+'</td><td class="'+(s.sex==='女'?'girl':'boy')+'">'+esc(s.sex)+'</td>';
+    var rec=(db.scores[cid]&&db.scores[cid][s.id])||{};
+    cols.forEach(function(c){
+      var active=(s.sex==='男')?!!c.dateM:!!c.dateF;
+      if(!active){
+        h+='<td class="na"></td>';
+        return;
+      }
+      var v=rec[c.k]!=null?String(rec[c.k]):'';
+      var isAbs=(v==='缺');
+      var isM=!!rec[c.k+'_m']||v==='M';
+      h+='<td><input data-sid="'+s.id+'" data-key="'+esc(c.k)+'" value="'+esc(isAbs?'':v)+'"'+(isAbs?' disabled':'')+'>'+
+         (isM?'<span class="m-flag">M</span>':'')+
+         '<span class="abs-btn'+(isAbs?' on':'')+'" data-sid="'+s.id+'" data-key="'+esc(c.k)+'" data-val="缺">缺</span>';
+      if(s.sex==='女'){
+        h+='<span class="abs-btn'+(isM?' on-m':'')+'" data-sid="'+s.id+'" data-key="'+esc(c.k)+'" data-val="M">M</span>';
+      }
+      h+='</td>';
+    });
+    h+='</tr>';
+  });
+  tbl.innerHTML=h+'</tbody>';
+  if(!tbl._bound){
+    tbl.addEventListener('input',onScoreInput);
+    tbl.addEventListener('click',onAbsClick);
+    tbl._bound=true;
+  }
+}
+var _tm=null;
+function onScoreInput(e){
+  var inp=e.target;if(!inp.dataset.sid||inp.disabled)return;
+  var cid=document.getElementById('scoreClass').value;
+  db.scores[cid]=db.scores[cid]||{};
+  db.scores[cid][inp.dataset.sid]=db.scores[cid][inp.dataset.sid]||{};
+  db.scores[cid][inp.dataset.sid][inp.dataset.key]=inp.value;
+  if(inp.dataset.key==='身高'||inp.dataset.key==='体重'){
+    var row=inp.closest('tr'),ht=null,wt=null;
+    row.querySelectorAll('input').forEach(function(i){
+      if(i.dataset.key==='身高')ht=parseFloat(i.value);
+      if(i.dataset.key==='体重')wt=parseFloat(i.value);
+    });
+    if(ht>0&&wt>0){
+      var bmi=(wt/((ht/100)*(ht/100))).toFixed(1);
+      db.scores[cid][inp.dataset.sid]['BMI']=bmi;
+      row.querySelectorAll('input').forEach(function(i){
+        if(i.dataset.key==='BMI')i.value=bmi;
+      });
+    }
+  }
+  clearTimeout(_tm);_tm=setTimeout(autoSync,1200);
+}
+function onAbsClick(e){
+  var btn=e.target.closest('.abs-btn');
+  if(!btn)return;
+  var sid=btn.dataset.sid,key=btn.dataset.key,val=btn.dataset.val;
+  var cid=document.getElementById('scoreClass').value;
+  db.scores[cid]=db.scores[cid]||{};
+  db.scores[cid][sid]=db.scores[cid][sid]||{};
+  var rec=db.scores[cid][sid];
+  var cell=btn.parentNode;
+  var inp=cell.querySelector('input');
+
+  if(val==='缺'){
+    if(rec[key]==='缺'){
+      delete rec[key];
+      btn.classList.remove('on');
+      if(inp)inp.disabled=false;
+    }else{
+      rec[key]='缺';
+      cell.querySelectorAll('.abs-btn').forEach(function(b){b.classList.remove('on','on-m')});
+      btn.classList.add('on');
+      if(inp){inp.disabled=true;inp.value=''}
+      delete rec[key+'_m'];
+      var mf=cell.querySelector('.m-flag');if(mf)mf.remove();
+    }
+  }else{
+    if(rec[key+'_m']){
+      delete rec[key+'_m'];
+      btn.classList.remove('on-m');
+      var f2=cell.querySelector('.m-flag');if(f2)f2.remove();
+    }else{
+      if(rec[key]==='缺'){
+        delete rec[key];
+        var ab=cell.querySelector('.abs-btn');
+        if(ab)ab.classList.remove('on');
+        if(inp)inp.disabled=false;
+      }
+      rec[key+'_m']=1;
+      btn.classList.add('on-m');
+      if(!cell.querySelector('.m-flag')){
+        var f3=document.createElement('span');f3.className='m-flag';f3.textContent='M';
+        cell.insertBefore(f3,btn);
+      }
+    }
+  }
+  clearTimeout(_tm);_tm=setTimeout(autoSync,600);
+}
+function fullscreen(){
+  if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();
+  else if(document.exitFullscreen)document.exitFullscreen();
+}
+
+/* ================= Excel 导入导出 ================= */
+function downloadTemplate(t){
+  if(needXLSX())return;
+  var wb=XLSX.utils.book_new();
+  if(t===0){
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['年级','班级','姓名','性别','学号','出生日期'],['6','1','张三','男','2024001','2017-09-01']]),'学生名单');
+  }else{
+    var hdr=['学号','姓名','班级','性别'].concat(itemsByGrade(6)).concat(['BMI']);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr]),'成绩记录');
+  }
+  XLSX.writeFile(wb,t===0?'学生名单模板.xlsx':'成绩模板.xlsx');
+}
+function exportStudents(){
+  if(needXLSX())return;
+  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
+  db.students.forEach(function(s){
+    var c=clsById(s.classId);
+    rows.push([c?GR[c.grade]+'年级':'',c?c.name:'',s.name,s.sex,s.no,s.birth]);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
+  XLSX.writeFile(wb,'学生名单.xlsx');
+}
+function exportScores(){
+  if(needXLSX())return;
+  var hdr=['学号','姓名','班级','性别'],used={};
+  db.classes.forEach(function(c){
+    itemsByGrade(c.grade).concat(db.customItems||[]).forEach(function(i){
+      if(!used[i]){used[i]=1;hdr.push(i)}
+    });
+  });
+  hdr.push('BMI');
+  var rows=[hdr];
+  db.students.forEach(function(s){
+    var c=clsById(s.classId);
+    var sc=(c&&db.scores[c.id]&&db.scores[c.id][s.id])||{};
+    var r=[s.no,s.name,c?c.name:'',s.sex];
+    for(var i=4;i<hdr.length;i++)r.push(sc[hdr[i]]!=null?sc[hdr[i]]:'');
+    rows.push(r);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
+  XLSX.writeFile(wb,'成绩记录.xlsx');
+}
+function exportClassStudents(){
+  if(needXLSX())return;
+  var cid=document.getElementById('expClass').value;
+  var c=clsById(cid);
+  if(!c){alert('请先创建班级');return}
+  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
+  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
+    rows.push([GR[c.grade]+'年级',c.name,s.name,s.sex,s.no,s.birth]);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
+  XLSX.writeFile(wb,clsLabel(c)+'_学生名单.xlsx');
+}
+function exportClassScores(){
+  if(needXLSX())return;
+  var cid=document.getElementById('expClass').value;
+  var c=clsById(cid);
+  if(!c){alert('请先创建班级');return}
+  var cols=getSel()[cid]||[];
+  var hdr=['学号','姓名','性别'];
+  cols.forEach(function(col){
+    var act=[];
+    if(col.dateM)act.push('男'+col.dateM);
+    if(col.dateF)act.push('女'+col.dateF);
+    hdr.push(col.name+(act.length?'（'+act.join('/')+'）':''));
+  });
+  hdr.push('BMI');
+  var rows=[hdr];
+  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
+    var sc=(db.scores[cid]&&db.scores[cid][s.id])||{};
+    var r=[s.no,s.name,s.sex];
+    cols.forEach(function(col){
+      var active=(s.sex==='男')?!!col.dateM:!!col.dateF;
+      var v=active&&sc[col.k]!=null?String(sc[col.k]):'';
+      if(active&&sc[col.k+'_m'])v+=(v?' ':'')+'M';
+      if(v==='缺')v='缺';
+      r.push(v);
+    });
+    r.push(sc['BMI']!=null?sc['BMI']:'');
+    rows.push(r);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
+  XLSX.writeFile(wb,clsLabel(c)+'_成绩记录.xlsx');
+}
+function handleImport(file,type){
+  if(needXLSX()){this.value='';return}
+  var fr=new FileReader();
+  fr.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      var n=0;
+      rows.forEach(function(r){
+        if(type==='stu'){
+          var cname=String(r['班级']||'').trim();
+          if(!cname&&!String(r['姓名']||'').trim())return;
+          var c=null;
+          db.classes.forEach(function(x){if(x.name===cname)c=x});
+          if(!c){c={id:uid('c'),grade:+(String(r['年级']||'').replace(/[^1-6]/g,'')||1),name:cname||'未分班'};db.classes.push(c)}
+          db.students.push({id:uid('s'),classId:c.id,no:String(r['学号']||''),name:String(r['姓名']||''),sex:String(r['性别']||'男'),birth:String(r['出生日期']||'')});
+          n++;
+        }else{
+          var no=String(r['学号']||'').trim(),nm=String(r['姓名']||'').trim(),cn=String(r['班级']||'').trim();
+          var stu=null;
+          if(no)stu=db.students.find(function(s){return s.no===no});
+          if(!stu)stu=db.students.find(function(s){return s.name===nm&&(!cn||(clsById(s.classId)||{}).name===cn)});
+          if(!stu)return;
+          db.scores[stu.classId]=db.scores[stu.classId]||{};
+          db.scores[stu.classId][stu.id]=db.scores[stu.classId][stu.id]||{};
+          Object.keys(r).forEach(function(k){
+            if(['学号','姓名','班级','性别','年级'].indexOf(k)===-1&&String(r[k]).trim()!=='')
+              db.scores[stu.classId][stu.id][k.trim()]=String(r[k]).trim();
+          });
+          n++;
+        }
+      });
+      saveDB(true);renderClasses();fillSelects();
+      toast('✅ 导入成功 '+n+' 条');
+    }catch(err){alert('导入失败：'+err.message)}
+  };
+  fr.readAsArrayBuffer(file);
+}
+document.getElementById('impStu').addEventListener('change',function(){if(this.files[0])handleImport(this.files[0],'stu')});
+document.getElementById('impScore').addEventListener('change',function(){if(this.files[0])handleImport(this.files[0],'score')});
+document.getElementById('impJson').addEventListener('change',function(){
+  var f=this.files[0];if(!f)return;
+  var fr=new FileReader();
+  fr.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d.classes&&!d.students)throw 0;
+      if(d.sel){
+        try{LS.set(SEL_KEY,JSON.stringify(d.sel))}catch(e2){}
+        delete d.sel;
+      }
+      if(!confirm('将从备份恢复并覆盖当前数据（当前数据先留历史备份），确定？'))return;
+      histSave();
+      db=d;migrate();persist();
+      renderAll();toast('✅ 备份已恢复（旧格式已自动迁移）');
+    }catch(err){alert('恢复失败：不是有效的备份文件')}
+  };
+  fr.readAsText(f);
+});
+function exportJSON(){
+  var b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='体质测试数据备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function clearAll(){
+  if(!confirm('⚠️ 确认清空全部数据？（会自动留历史备份）'))return;
+  histSave();
+  db=emptyDB();persist();
+  try{LS.set(SEL_KEY,'{}')}catch(e){}
+  renderAll();toast('已清空');
+}
+
+/* ================= 云端 ================= */
+function apiUrl(){return (LS.get(API_KEY)||'').trim()}
+function saveApiUrl(){
+  var v=document.getElementById('apiUrl').value.trim();
+  LS.set(API_KEY,v);toast(v?'✅ 地址已保存':'已清除地址');
+}
+function cloudUpload(){
+  var u=apiUrl();
+  if(!u){alert('请先填写并保存云端地址');return}
+  toast('⏳ 正在上传…');
+  var payload=Object.assign({},db,{sel:getSel()});
+  fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json().catch(function(){return{}}).then(function(j){
+      toast(r.ok&&j.ok!==false?'✅ 已上传到云端':'❌ 上传失败：'+(j.error||('HTTP '+r.status)));
+    })})
+    .catch(function(e){toast('❌ 上传失败：'+e.message)});
+}
+function cloudDownload(){
+  var u=apiUrl();
+  if(!u){alert('请先填写并保存云端地址');return}
+  toast('⏳ 正在下载…');
+  fetch(u)
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .then(function(data){
+      if(!data||typeof data!=='object'||(!data.classes&&!data.students)){alert('云端数据格式不正确');return}
+      if(!confirm('将从云端下载数据并覆盖本机（本机数据先留备份），确定？'))return;
+      histSave();
+      if(data.sel){try{LS.set(SEL_KEY,JSON.stringify(data.sel))}catch(e2){}}
+      delete data.sel;
+      db=data;migrate();persist();
+      renderAll();toast('✅ 云端数据已应用（旧格式已自动迁移）');
+    })
+    .catch(function(e){alert('下载失败：'+e.message)});
+}
+function saveAndUpload(){
+  persist();
+  var u=apiUrl();
+  if(!u){
+    toast('✅ 已保存本机（未配置云端地址）');
+    return;
+  }
+  toast('⏳ 已保存，正在上传云端…');
+  var payload=Object.assign({},db,{sel:getSel()});
+  fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){
+      return r.json().catch(function(){return{}}).then(function(j){
+        toast(r.ok&&j.ok!==false?'✅ 已保存并上传云端':'❌ 上传失败：'+(j.error||('HTTP '+r.status)));
+      });
+    })
+    .catch(function(e){toast('❌ 上传失败：'+e.message)});
+}
+
+/* ===== 云端历史（页面内弹窗，不再用原生 prompt） ===== */
+function openHist(){document.getElementById('histMask').classList.add('show')}
+function closeHist(){document.getElementById('histMask').classList.remove('show')}
+function histBody(html){document.getElementById('histBody').innerHTML=html}
+
+function cloudHistory(){
+  var u=apiUrl();
+  if(!u){alert('请先填写并保存云端地址');return}
+  openHist();
+  histBody('<div class="snap-empty">⏳ 正在获取云端历史…</div>');
+  fetch(u+(u.indexOf('?')>-1?'&':'?')+'action=list')
+    .then(function(r){
+      return r.text().then(function(txt){
+        var j=null;
+        try{j=JSON.parse(txt)}catch(e){}
+        return {status:r.status,ok:r.ok,json:j,text:txt};
+      });
+    })
+    .then(function(res){
+      var j=res.json;
+      if(!j||typeof j!=='object'){
+        histBody('<div class="snap-empty">❌ 云端返回的不是 JSON（HTTP '+res.status+'）</div>'+
+                 '<div class="snap-raw">'+esc(String(res.text||'').slice(0,600)||'（空响应）')+'</div>'+
+                 '<p style="color:#a00;margin-top:8px">请确认 Worker 已部署为最新版（含 /ping 与 action=list 支持）。</p>');
+        return;
+      }
+      var hist=null;
+      if(Array.isArray(j.history))hist=j.history;
+      else if(Array.isArray(j.snapshots))hist=j.snapshots;
+      else if(Array.isArray(j.list))hist=j.list;
+      if(!hist||!hist.length){
+        histBody('<div class="snap-empty">云端暂无历史快照</div>'+
+                 '<p style="color:#888">说明：每 <b>10 次</b>上传自动留一份快照（保留30份）。当前累计上传：'+
+                 (j.uploads!=null?j.uploads:'未知')+' 次，距下次快照还差 '+
+                 (j.nextSnapshotIn!=null?j.nextSnapshotIn:'?')+' 次。</p>'+
+                 (hist===null?'<div class="snap-raw">'+esc(JSON.stringify(j).slice(0,400))+'</div>':''));
+        return;
+      }
+      var meta=(j.uploads!=null)?('<p style="color:#888;margin-bottom:8px">累计上传 '+j.uploads+' 次 · 距下次快照还差 '+j.nextSnapshotIn+' 次</p>'):'';
+      var h=meta;
+      hist.forEach(function(item,i){
+        var ts=item&&item.ts!=null?item.ts:null;
+        var time=item&&item.time?String(item.time).replace('T',' ').slice(0,19):(ts?new Date(ts).toLocaleString():'未知时间');
+        h+='<div class="snap-item"><span class="t">'+(i+1)+'. '+esc(time)+'</span>'+
+           '<button data-ts="'+(ts!=null?ts:i)+'">恢复</button></div>';
+      });
+      histBody(h);
+      /* 绑定恢复按钮 */
+      document.querySelectorAll('#histBody .snap-item button').forEach(function(btn){
+        btn.addEventListener('click',function(){restoreSnap(btn.dataset.ts)});
+      });
+    })
+    .catch(function(e){
+      histBody('<div class="snap-empty">❌ 获取失败：'+esc(e.message)+'</div>'+
+               '<p style="color:#888">请检查：云端地址是否正确、网络是否可用、Worker 是否已部署。</p>');
+    });
+}
+function restoreSnap(ts){
+  var u=apiUrl();
+  if(!confirm('将恢复该云端快照并覆盖本机（本机数据先留备份），确定？'))return;
+  toast('⏳ 正在恢复快照…');
+  fetch(u+(u.indexOf('?')>-1?'&':'?')+'ts='+encodeURIComponent(ts))
+    .then(function(r){
+      return r.text().then(function(txt){
+        var j=null;
+        try{j=JSON.parse(txt)}catch(e){}
+        return {status:r.status,json:j};
+      });
+    })
+    .then(function(res){
+      var data=res.json;
+      if(!data||typeof data!=='object'||(!data.classes&&!data.students)){
+        alert('快照数据异常（HTTP '+res.status+'），未做任何修改');
+        return;
+      }
+      histSave();
+      if(data.sel){try{LS.set(SEL_KEY,JSON.stringify(data.sel))}catch(e2){}}
+      delete data.sel;
+      db=data;migrate();persist();
+      renderAll();closeHist();
+      toast('✅ 已恢复云端快照');
+    })
+    .catch(function(e){alert('快照下载失败：'+e.message)});
+}
+
+/* ================= 录入自动保存+上传云端 ================= */
+var _syncing=false,_syncPending=false,_dirty=false;
+function autoSync(){
+  persist();
+  _dirty=true;
+  tryUpload();
+}
+function tryUpload(){
+  if(_syncing){_syncPending=true;return}
+  if(!navigator.onLine)return;
+  var u=apiUrl();
+  if(!u)return;
+  _syncing=true;
+  var payload=Object.assign({},db,{sel:getSel()});
+  fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){
+      _syncing=false;
+      if(r.ok){_dirty=false;syncHint('☁️ 已同步');if(_syncPending){_syncPending=false;tryUpload()}}
+      else{_syncPending=true;syncRetry()}
+    })
+    .catch(function(){
+      _syncing=false;_syncPending=true;
+      syncRetry();
+    });
+}
+var _retryN=0;
+function syncRetry(){
+  if(_retryN>=3)return;
+  _retryN++;
+  setTimeout(function(){
+    _retryN=0;
+    if(_dirty)tryUpload();
+  },[0,2000,5000,10000][_retryN]);
+}
+window.addEventListener('online',function(){
+  if(_dirty){toast('🔄 网络恢复，正在同步云端…');tryUpload()}
+});
+window.addEventListener('beforeunload',function(){
+  if(_dirty&&navigator.onLine){
+    var u=apiUrl();
+    if(u)try{
+      fetch(u,{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},
+               body:JSON.stringify(Object.assign({},db,{sel:getSel()}))});
+    }catch(e){}
+  }
+});
+function syncHint(txt){
+  var el=document.getElementById('syncHint');
+  if(!el){
+    el=document.createElement('div');el.id='syncHint';
+    el.style.cssText='position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#27ae60;color:#fff;padding:5px 14px;border-radius:14px;font-size:12px;z-index:99998;transition:opacity .5s;opacity:0;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  el.textContent=txt;
+  el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(function(){el.style.opacity='0'},1500);
+}
+
+/* ================= 本地历史快照 ================= */
+function histSave(){
+  try{LS.set('__hist_'+Date.now(),JSON.stringify(db))}catch(e){}
+}
+
+/* ================= 统计与初始化 ================= */
+function updateStats(){
+  document.getElementById('stClass').textContent=db.classes.length;
+  document.getElementById('stStu').textContent=db.students.length;
+  var n=0;
+  Object.keys(db.scores).forEach(function(cid){
+    Object.keys(db.scores[cid]).forEach(function(sid){n+=Object.keys(db.scores[cid][sid]).length});
+  });
+  document.getElementById('stScore').textContent=n;
+}
+function renderAll(){
+  renderClasses();fillSelects();updateStats();
+}
+(function init(){
+  document.getElementById('apiUrl').value=apiUrl();
+  if(LS.isMem()){
+    toast('⚠️ 本机存储受限，当前为内存模式，数据请及时上传云端');
+  }
+  renderAll();
+})();
+</script>
+</body>
+</html>
