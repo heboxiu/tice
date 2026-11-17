@@ -32,7 +32,6 @@ window.onerror=function(msg,src,line,col){
   (document.body||document.documentElement).appendChild(d);
   setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},8000);
 };
-/* 微信/QQ 内置浏览器检测 */
 function inWeChat(){return /MicroMessenger/i.test(navigator.userAgent)}
 function inQQ(){return /QQ\/|MQQBrowser/i.test(navigator.userAgent)&&!inWeChat()}
 </script>
@@ -223,7 +222,7 @@ td.na{color:#ccc;background:#f7f7f7}
   <div class="card"><h3>恢复数据备份（JSON，兼容旧版）</h3>
     <input type="file" id="impJson" accept=".json"></div>
   <h2>📤 导出数据</h2>
-  <p class="hint" style="margin-top:0">点击导出按钮后弹窗选择：<b>⬇ 直接下载</b>保存文件到本机（微信内可能被拦截，请用下面的链接方式）；<b>🔗 复制下载链接</b>生成一条短链接，粘贴到<b>系统浏览器</b>（微信内点右上角"…"→选择浏览器打开）打开即自动下载 JSON 文件。</p>
+  <p class="hint" style="margin-top:0">点击导出按钮后弹窗选择：<b>⬇ 直接下载</b>保存文件到本机（微信内可能被拦截）；<b>🔗 复制下载链接</b>生成短链接，粘贴到<b>系统浏览器</b>（微信内点右上角"…"→选择浏览器打开）打开即<b>直接下载文件</b>——名单/成绩为 Excel 文件，完整备份为 JSON 文件。</p>
   <div class="row">
     <button class="btn green" onclick="exportStudents()">学生名单</button>
     <button class="btn green" onclick="exportScores()">成绩记录</button>
@@ -252,7 +251,7 @@ td.na{color:#ccc;background:#f7f7f7}
       <button class="btn" onclick="cloudDownload()">⬇ 从云端下载</button>
       <button class="btn" onclick="cloudHistory()">☁️ 云端历史</button>
     </div>
-    <p style="font-size:12px;color:#888;margin-top:8px;line-height:1.7">服务端（Cloudflare Worker + KV）<b>每 10 次上传自动留一份快照</b>（保留30份），下载的旧格式数据自动迁移。录入时自动保存+自动同步云端；断网时挂起，网络恢复自动补传。导出的分享链接有效期 <b>7 天</b>。</p>
+    <p style="font-size:12px;color:#888;margin-top:8px;line-height:1.7">服务端（Cloudflare Worker + KV）<b>每 10 次上传自动留一份快照</b>（保留30份），下载的旧格式数据自动迁移。录入时自动保存+自动同步云端；断网时挂起，网络恢复自动补传。分享链接有效期 <b>7 天</b>；名单/成绩分享为 <b>Excel 文件</b>下载，完整备份分享为 JSON 文件下载。</p>
   </div>
 </div>
 
@@ -390,14 +389,6 @@ td.na{color:#ccc;background:#f7f7f7}
         <tbody>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#e8f5e9;color:#2e7d32;padding:5px 8px"> 男 生</td></tr>
           <tr>
-            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
-            <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
-          </tr>
-          <tr>
-            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
-            <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
-          </tr>
-          <tr>
             <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
           </tr>
@@ -405,7 +396,23 @@ td.na{color:#ccc;background:#f7f7f7}
             <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">35</td>
           </tr>
+          <tr>
+            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
+          </tr>
+          <tr>
+            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
+          </tr>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
+          <tr>
+            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
+          </tr>
+          <tr>
+            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">41</td><td class="pad">40</td>
+          </tr>
           <tr>
             <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">2.0</td><td class="pad">2.1</td><td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td>
@@ -413,14 +420,6 @@ td.na{color:#ccc;background:#f7f7f7}
           <tr>
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">100</td><td class="pad">110</td><td class="pad">118</td><td class="pad">125</td><td class="pad">132</td><td class="pad">140</td>
-          <tr>
-            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
-          </tr>
-          <tr>
-            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">40</td>
-          </tr>
           </tr>
         </tbody>
       </table>
@@ -445,17 +444,17 @@ td.na{color:#ccc;background:#f7f7f7}
     <div class="modal-h"><span>📤 导出方式</span><span class="x" onclick="closeExp()">×</span></div>
     <div class="modal-b" id="expBody">
       <div class="exp-warn" id="expWxWarn" style="display:none">
-        ⚠️ 当前在微信/QQ内置浏览器中，<b>直接下载可能被拦截</b>。建议用「复制下载链接」，然后点右上角「…」→「在浏览器打开」，粘贴链接即可下载。
+        ⚠️ 当前在微信/QQ内置浏览器中，<b>直接下载可能被拦截</b>。建议用「复制下载链接」，然后点右上角「…」→「在浏览器打开」，粘贴链接即可下载文件。
       </div>
       <div class="exp-opt">
-        <div class="d"><b>⬇ 直接下载</b><small>保存文件到本机（浏览器环境）</small></div>
+        <div class="d"><b>⬇ 直接下载</b><small id="expDlDesc">保存文件到本机（浏览器环境）</small></div>
         <button id="expDlBtn">下载</button>
       </div>
       <div class="exp-opt">
-        <div class="d"><b>🔗 复制下载链接</b><small>生成短链接，粘贴到系统浏览器打开即下载 JSON 文件（需已配置云端地址，链接有效期7天）</small></div>
+        <div class="d"><b>🔗 复制下载链接</b><small id="expLinkDesc">生成短链接，粘贴到系统浏览器打开即直接下载文件（需已配置云端地址，链接有效期7天）</small></div>
         <button class="blue" id="expLinkBtn">复制链接</button>
       </div>
-      <div class="exp-opt" id="impLinkOpt">
+      <div class="exp-opt">
         <div class="d"><b>🔗 复制导入链接</b><small>无需云端。对方打开链接进入本工具，确认后自动导入数据</small></div>
         <button class="orange" id="expImpBtn">复制链接</button>
       </div>
@@ -640,7 +639,7 @@ function sortGender(list){var o={'男':0,'女':1};return list.slice().sort(funct
 function todayStr(){var d=new Date(),p=function(n){return(n<10?'0':'')+n};return p(d.getMonth()+1)+'-'+p(d.getDate())}
 function needXLSX(){
   if(typeof XLSX==='undefined'){
-    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」或「复制下载链接」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
+    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」或「复制导入链接」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
     return true;
   }
   return false;
@@ -1053,19 +1052,93 @@ function fullscreen(){
   else if(document.exitFullscreen)document.exitFullscreen();
 }
 
+/* ================= Excel 工作簿构建（直接下载与链接分享共用） ================= */
+function buildStudentsWb(){
+  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
+  db.students.forEach(function(s){
+    var c=clsById(s.classId);
+    rows.push([c?GR[c.grade]+'年级':'',c?c.name:'',s.name,s.sex,s.no,s.birth]);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
+  return {wb:wb,name:'学生名单.xlsx'};
+}
+function buildScoresWb(){
+  var hdr=['学号','姓名','班级','性别'],used={};
+  db.classes.forEach(function(c){
+    itemsByGrade(c.grade).concat(db.customItems||[]).forEach(function(i){
+      if(!used[i]){used[i]=1;hdr.push(i)}
+    });
+  });
+  hdr.push('BMI');
+  var rows=[hdr];
+  db.students.forEach(function(s){
+    var c=clsById(s.classId);
+    var sc=(c&&db.scores[c.id]&&db.scores[c.id][s.id])||{};
+    var r=[s.no,s.name,c?c.name:'',s.sex];
+    for(var i=4;i<hdr.length;i++)r.push(sc[hdr[i]]!=null?sc[hdr[i]]:'');
+    rows.push(r);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
+  return {wb:wb,name:'成绩记录.xlsx'};
+}
+function buildClassStudentsWb(cid){
+  var c=clsById(cid);
+  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
+  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
+    rows.push([GR[c.grade]+'年级',c.name,s.name,s.sex,s.no,s.birth]);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
+  return {wb:wb,name:clsLabel(c)+'_学生名单.xlsx'};
+}
+function buildClassScoresWb(cid){
+  var c=clsById(cid);
+  var cols=getSel()[cid]||[];
+  var hdr=['学号','姓名','性别'];
+  cols.forEach(function(col){
+    var act=[];
+    if(col.dateM)act.push('男'+col.dateM);
+    if(col.dateF)act.push('女'+col.dateF);
+    hdr.push(col.name+(act.length?'（'+act.join('/')+'）':''));
+  });
+  hdr.push('BMI');
+  var rows=[hdr];
+  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
+    var sc=(db.scores[cid]&&db.scores[cid][s.id])||{};
+    var r=[s.no,s.name,s.sex];
+    cols.forEach(function(col){
+      var active=(s.sex==='男')?!!col.dateM:!!col.dateF;
+      var v=active&&sc[col.k]!=null?String(sc[col.k]):'';
+      if(active&&sc[col.k+'_m'])v+=(v?' ':'')+'M';
+      if(v==='缺')v='缺';
+      r.push(v);
+    });
+    r.push(sc['BMI']!=null?sc['BMI']:'');
+    rows.push(r);
+  });
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
+  return {wb:wb,name:clsLabel(c)+'_成绩记录.xlsx'};
+}
+
 /* ================= 导出方式弹窗 ================= */
-var _expDownload=null,_expJson=null;
-function openExp(title,downloadFn,jsonStr){
+/* _expShare: {t:'xlsx'|'json', n:文件名, d:base64或json串}；null 表示链接分享不可用 */
+var _expDownload=null,_expShare=null;
+function openExp(title,downloadFn,sharePayload,dlDesc){
   _expDownload=downloadFn;
-  _expJson=jsonStr;
+  _expShare=sharePayload||null;
   document.querySelector('#expMask .modal-h span').textContent='📤 '+title;
   document.getElementById('expLinkArea').style.display='none';
   document.getElementById('expWxWarn').style.display=(inWeChat()||inQQ())?'block':'none';
+  document.getElementById('expDlDesc').textContent=dlDesc||'保存文件到本机（浏览器环境）';
   var dl=document.getElementById('expDlBtn');
   dl.disabled=false;dl.textContent='下载';
-  if(needXLSX()&&downloadFn!==makeJsonBlob){dl.disabled=true;dl.textContent='(组件未加载)'}
+  if(!downloadFn){dl.disabled=true;dl.textContent='(组件未加载)'}
   var lb=document.getElementById('expLinkBtn');
   lb.disabled=false;lb.textContent='复制链接';
+  if(!_expShare){lb.disabled=true;lb.textContent='(不可用)'}
   document.getElementById('expMask').classList.add('show');
 }
 function closeExp(){document.getElementById('expMask').classList.remove('show')}
@@ -1073,10 +1146,10 @@ document.getElementById('expDlBtn').addEventListener('click',function(){
   if(_expDownload)_expDownload();
   closeExp();
 });
-/* 复制下载链接：优先云端分享短链（浏览器打开直接下载文件），否则降级为导入链接 */
+/* 复制下载链接：Excel→.xlsx 文件下载；JSON→.json 文件下载；失败时降级导入链接 */
 document.getElementById('expLinkBtn').addEventListener('click',function(){
   var btn=this;
-  if(!_expJson)return;
+  if(!_expShare)return;
   var u=apiUrl();
   if(!u){
     toast('未配置云端地址，已改用导入链接');
@@ -1085,12 +1158,14 @@ document.getElementById('expLinkBtn').addEventListener('click',function(){
   }
   btn.disabled=true;btn.textContent='⏳ 生成中…';
   fetch(u+(u.indexOf('?')>-1?'&':'?')+'action=share',{
-    method:'POST',headers:{'Content-Type':'application/json'},body:_expJson
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(_expShare)
   }).then(function(r){return r.json()})
     .then(function(j){
       btn.disabled=false;btn.textContent='复制链接';
       if(j&&j.ok&&j.url){
-        showLink(j.url,'✅ 下载链接已复制。请粘贴到系统浏览器打开（微信内：右上角"…"→在浏览器打开），即可直接下载 JSON 文件。链接有效期7天。');
+        var ext=_expShare.t==='xlsx'?'Excel':'JSON';
+        showLink(j.url,'✅ 下载链接已复制（'+ext+'文件）。请粘贴到系统浏览器打开（微信内：右上角"…"→在浏览器打开），即可直接下载文件。链接有效期7天。');
       }else{
         toast('生成分享链接失败，已改用导入链接');
         doImportLink();
@@ -1105,7 +1180,7 @@ document.getElementById('expLinkBtn').addEventListener('click',function(){
 /* 复制导入链接 */
 document.getElementById('expImpBtn').addEventListener('click',doImportLink);
 function doImportLink(){
-  var link=location.origin+location.pathname+'#share='+encodeURIComponent(_expJson||JSON.stringify(db));
+  var link=location.origin+location.pathname+'#share='+encodeURIComponent(JSON.stringify(db));
   showLink(link,'✅ 导入链接已复制。发送给他人，对方打开链接并确认后，数据自动导入其工具中。');
 }
 function showLink(link,msg){
@@ -1139,7 +1214,52 @@ function showLink(link,msg){
   }catch(e){}
 })();
 
-/* ================= Excel 导入导出 ================= */
+/* ================= 导出入口 ================= */
+function exportStudents(){
+  if(needXLSX())return;
+  var b=buildStudentsWb();
+  var share=null;
+  try{share={t:'xlsx',n:b.name,d:XLSX.write(b.wb,{bookType:'xlsx',type:'base64'})}}catch(e){}
+  openExp('导出学生名单',function(){XLSX.writeFile(b.wb,b.name)},share,'保存 Excel 文件到本机');
+}
+function exportScores(){
+  if(needXLSX())return;
+  var b=buildScoresWb();
+  var share=null;
+  try{share={t:'xlsx',n:b.name,d:XLSX.write(b.wb,{bookType:'xlsx',type:'base64'})}}catch(e){}
+  openExp('导出成绩记录',function(){XLSX.writeFile(b.wb,b.name)},share,'保存 Excel 文件到本机');
+}
+function exportJSON(){
+  var name='体质测试数据备份_'+new Date().toISOString().slice(0,10)+'.json';
+  var json=JSON.stringify(db,null,2);
+  openExp('导出完整备份',function(){
+    var bl=new Blob([json],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(bl);
+    a.download=name;a.click();
+  },{t:'json',n:name,d:json},'保存 JSON 备份到本机');
+}
+function exportClassStudents(){
+  if(needXLSX())return;
+  var cid=document.getElementById('expClass').value;
+  var c=clsById(cid);
+  if(!c){alert('请先创建班级');return}
+  var b=buildClassStudentsWb(cid);
+  var share=null;
+  try{share={t:'xlsx',n:b.name,d:XLSX.write(b.wb,{bookType:'xlsx',type:'base64'})}}catch(e){}
+  openExp('导出 '+clsLabel(c)+' 名单',function(){XLSX.writeFile(b.wb,b.name)},share,'保存 Excel 文件到本机');
+}
+function exportClassScores(){
+  if(needXLSX())return;
+  var cid=document.getElementById('expClass').value;
+  var c=clsById(cid);
+  if(!c){alert('请先创建班级');return}
+  var b=buildClassScoresWb(cid);
+  var share=null;
+  try{share={t:'xlsx',n:b.name,d:XLSX.write(b.wb,{bookType:'xlsx',type:'base64'})}}catch(e){}
+  openExp('导出 '+clsLabel(c)+' 成绩',function(){XLSX.writeFile(b.wb,b.name)},share,'保存 Excel 文件到本机');
+}
+
 function downloadTemplate(t){
   if(needXLSX())return;
   var wb=XLSX.utils.book_new();
@@ -1150,105 +1270,6 @@ function downloadTemplate(t){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr]),'成绩记录');
   }
   XLSX.writeFile(wb,t===0?'学生名单模板.xlsx':'成绩模板.xlsx');
-}
-function makeStudentsXlsx(){
-  if(needXLSX())return;
-  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
-  db.students.forEach(function(s){
-    var c=clsById(s.classId);
-    rows.push([c?GR[c.grade]+'年级':'',c?c.name:'',s.name,s.sex,s.no,s.birth]);
-  });
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
-  XLSX.writeFile(wb,'学生名单.xlsx');
-}
-function makeScoresXlsx(){
-  if(needXLSX())return;
-  var hdr=['学号','姓名','班级','性别'],used={};
-  db.classes.forEach(function(c){
-    itemsByGrade(c.grade).concat(db.customItems||[]).forEach(function(i){
-      if(!used[i]){used[i]=1;hdr.push(i)}
-    });
-  });
-  hdr.push('BMI');
-  var rows=[hdr];
-  db.students.forEach(function(s){
-    var c=clsById(s.classId);
-    var sc=(c&&db.scores[c.id]&&db.scores[c.id][s.id])||{};
-    var r=[s.no,s.name,c?c.name:'',s.sex];
-    for(var i=4;i<hdr.length;i++)r.push(sc[hdr[i]]!=null?sc[hdr[i]]:'');
-    rows.push(r);
-  });
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
-  XLSX.writeFile(wb,'成绩记录.xlsx');
-}
-function makeClassStudentsXlsx(){
-  if(needXLSX())return;
-  var cid=document.getElementById('expClass').value;
-  var c=clsById(cid);
-  if(!c){alert('请先创建班级');return}
-  var rows=[['年级','班级','姓名','性别','学号','出生日期']];
-  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
-    rows.push([GR[c.grade]+'年级',c.name,s.name,s.sex,s.no,s.birth]);
-  });
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
-  XLSX.writeFile(wb,clsLabel(c)+'_学生名单.xlsx');
-}
-function makeClassScoresXlsx(){
-  if(needXLSX())return;
-  var cid=document.getElementById('expClass').value;
-  var c=clsById(cid);
-  if(!c){alert('请先创建班级');return}
-  var cols=getSel()[cid]||[];
-  var hdr=['学号','姓名','性别'];
-  cols.forEach(function(col){
-    var act=[];
-    if(col.dateM)act.push('男'+col.dateM);
-    if(col.dateF)act.push('女'+col.dateF);
-    hdr.push(col.name+(act.length?'（'+act.join('/')+'）':''));
-  });
-  hdr.push('BMI');
-  var rows=[hdr];
-  sortGender(db.students.filter(function(s){return s.classId===cid})).forEach(function(s){
-    var sc=(db.scores[cid]&&db.scores[cid][s.id])||{};
-    var r=[s.no,s.name,s.sex];
-    cols.forEach(function(col){
-      var active=(s.sex==='男')?!!col.dateM:!!col.dateF;
-      var v=active&&sc[col.k]!=null?String(sc[col.k]):'';
-      if(active&&sc[col.k+'_m'])v+=(v?' ':'')+'M';
-      if(v==='缺')v='缺';
-      r.push(v);
-    });
-    r.push(sc['BMI']!=null?sc['BMI']:'');
-    rows.push(r);
-  });
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
-  XLSX.writeFile(wb,clsLabel(c)+'_成绩记录.xlsx');
-}
-function makeJsonBlob(){
-  var b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(b);
-  a.download='体质测试数据备份_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-}
-
-/* ---- 导出入口：全部走弹窗 ---- */
-function exportStudents(){openExp('导出学生名单',makeStudentsXlsx,JSON.stringify(db))}
-function exportScores(){openExp('导出成绩记录',makeScoresXlsx,JSON.stringify(db))}
-function exportJSON(){openExp('导出完整备份',makeJsonBlob,JSON.stringify(db))}
-function exportClassStudents(){
-  var c=clsById(document.getElementById('expClass').value);
-  if(!c){alert('请先创建班级');return}
-  openExp('导出 '+clsLabel(c)+' 名单',makeClassStudentsXlsx,JSON.stringify(db));
-}
-function exportClassScores(){
-  var c=clsById(document.getElementById('expClass').value);
-  if(!c){alert('请先创建班级');return}
-  openExp('导出 '+clsLabel(c)+' 成绩',makeClassScoresXlsx,JSON.stringify(db));
 }
 
 function handleImport(file,type){
