@@ -5,20 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏃 国家体质健康测试成绩记录工具</title>
 <script>
-/* ===== SheetJS 多 CDN 回退加载 ===== */
+/* ===== XLSX 加载：优先本地自托管，回退多 CDN ===== */
 (function(){
-  var CDNS=[
-    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+  var SRC=[
+    'xlsx.full.min.js',  /* 与 index.html 同目录（GitHub Pages 仓库内，最可靠） */
     'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://fastly.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
     'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-    'https://fastly.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'
   ];
   var i=0;
   function tryNext(){
-    if(i>=CDNS.length){console.error('❌ 所有 XLSX CDN 均加载失败，Excel 功能不可用（JSON 备份仍可用）');return}
+    if(i>=SRC.length){console.error('❌ XLSX 全部加载失败，Excel 功能不可用（JSON 备份仍可用）');return}
     var s=document.createElement('script');
-    s.src=CDNS[i++];
+    s.src=SRC[i++];
     s.onload=function(){console.log('✅ XLSX 加载成功：'+s.src)};
     s.onerror=tryNext;
     document.head.appendChild(s);
@@ -26,6 +27,7 @@
   tryNext();
 })();
 window.onerror=function(msg,src,line,col){
+  if(msg==='Script error')return false; /* 静默跨域 CDN 错误，避免红色横幅误报 */
   var d=document.createElement('div');
   d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#e74c3c;color:#fff;padding:10px;font-size:12px;white-space:pre-wrap;';
   d.textContent='❌ JS错误：'+msg+'（行:'+line+'）';
@@ -451,7 +453,7 @@ td.na{color:#ccc;background:#f7f7f7}
         <button id="expDlBtn">下载</button>
       </div>
       <div class="exp-opt">
-        <div class="d"><b>🔗 复制下载链接</b><small id="expLinkDesc">生成短链接，粘贴到系统浏览器打开即直接下载文件（需已配置云端地址，链接有效期7天）</small></div>
+        <div class="d"><b>🔗 复制下载链接</b><small>生成短链接，粘贴到系统浏览器打开即直接下载文件（需已配置云端地址，链接有效期7天）</small></div>
         <button class="blue" id="expLinkBtn">复制链接</button>
       </div>
       <div class="exp-opt">
@@ -639,7 +641,7 @@ function sortGender(list){var o={'男':0,'女':1};return list.slice().sort(funct
 function todayStr(){var d=new Date(),p=function(n){return(n<10?'0':'')+n};return p(d.getMonth()+1)+'-'+p(d.getDate())}
 function needXLSX(){
   if(typeof XLSX==='undefined'){
-    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」或「复制导入链接」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
+    alert('Excel 组件（XLSX）未能加载。\n\n请检查：\n· 仓库根目录是否已上传 xlsx.full.min.js（与 index.html 同目录）；\n· 或访问 页面地址/xlsx.full.min.js 看是否为 JS 代码而非 404。\n\n临时替代：导出/导入用「完整备份(JSON)」。');
     return true;
   }
   return false;
