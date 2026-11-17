@@ -32,6 +32,9 @@ window.onerror=function(msg,src,line,col){
   (document.body||document.documentElement).appendChild(d);
   setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},8000);
 };
+/* 微信/QQ 内置浏览器检测 */
+function inWeChat(){return /MicroMessenger/i.test(navigator.userAgent)}
+function inQQ(){return /QQ\/|MQQBrowser/i.test(navigator.userAgent)&&!inWeChat()}
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -94,21 +97,31 @@ td.na{color:#ccc;background:#f7f7f7}
 .abs-btn.on-m{background:#c2185b;border-color:#c2185b;color:#fff;font-weight:bold}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;display:none;z-index:99999;font-size:13px}
 
-/* ===== 云端历史弹窗 ===== */
+/* ===== 通用弹窗 ===== */
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-mask.show{display:flex}
-.modal{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+.modal{background:#fff;border-radius:12px;max-width:460px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
 .modal-h{padding:14px 16px;background:#2c7be5;color:#fff;font-size:15px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
 .modal-h .x{cursor:pointer;font-size:20px;line-height:1;opacity:.85}
 .modal-b{padding:12px 16px;overflow:auto;font-size:13px;line-height:1.7}
+.modal-f{padding:10px 16px;border-top:1px solid #e8eef5;text-align:right}
+.modal-f button{background:#e67e22;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer}
+.exp-opt{display:flex;align-items:center;justify-content:space-between;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.exp-opt .d{flex:1}
+.exp-opt .d b{display:block;font-size:14px}
+.exp-opt .d small{color:#888;display:block;margin-top:2px;line-height:1.5}
+.exp-opt button{background:#27ae60;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;margin-left:10px;white-space:nowrap}
+.exp-opt button.blue{background:#2c7be5}
+.exp-opt button.orange{background:#e67e22}
+.exp-opt button:disabled{background:#ccc;cursor:not-allowed}
+.exp-opt button:active{transform:scale(.96)}
+.link-box{width:100%;height:64px;font-size:11px;color:#555;word-break:break-all}
+.exp-warn{background:#fdecec;border:1px solid #f5b5b5;border-radius:6px;padding:8px 10px;font-size:12px;color:#c0392b;margin-bottom:10px;line-height:1.6}
 .snap-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:8px}
 .snap-item .t{color:#444}
 .snap-item button{background:#27ae60;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px}
-.snap-item button:active{transform:scale(.96)}
 .snap-empty{color:#888;text-align:center;padding:12px 0}
 .snap-raw{background:#f6f8fa;border:1px solid #dde4ec;border-radius:6px;padding:8px;font-size:11px;word-break:break-all;white-space:pre-wrap;color:#a00;margin-top:8px}
-.modal-f{padding:10px 16px;border-top:1px solid #e8eef5;text-align:right}
-.modal-f button{background:#e67e22;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer}
 
 /* ===== 评分标准表 ===== */
 .std-block{margin-bottom:24px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
@@ -210,6 +223,7 @@ td.na{color:#ccc;background:#f7f7f7}
   <div class="card"><h3>恢复数据备份（JSON，兼容旧版）</h3>
     <input type="file" id="impJson" accept=".json"></div>
   <h2>📤 导出数据</h2>
+  <p class="hint" style="margin-top:0">点击导出按钮后弹窗选择：<b>⬇ 直接下载</b>保存文件到本机（微信内可能被拦截，请用下面的链接方式）；<b>🔗 复制下载链接</b>生成一条短链接，粘贴到<b>系统浏览器</b>（微信内点右上角"…"→选择浏览器打开）打开即自动下载 JSON 文件。</p>
   <div class="row">
     <button class="btn green" onclick="exportStudents()">学生名单</button>
     <button class="btn green" onclick="exportScores()">成绩记录</button>
@@ -230,7 +244,7 @@ td.na{color:#ccc;background:#f7f7f7}
   <h2>☁️ 云端存储</h2>
   <div class="card">
     <div class="row">
-      <input id="apiUrl" placeholder="https://data.123.com/" style="flex:1;min-width:240px">
+      <input id="apiUrl" placeholder="https://ticedata.990225.xyz/" style="flex:1;min-width:240px">
       <button class="btn orange" onclick="saveApiUrl()">保存地址</button>
     </div>
     <div class="row">
@@ -238,7 +252,7 @@ td.na{color:#ccc;background:#f7f7f7}
       <button class="btn" onclick="cloudDownload()">⬇ 从云端下载</button>
       <button class="btn" onclick="cloudHistory()">☁️ 云端历史</button>
     </div>
-    <p style="font-size:12px;color:#888;margin-top:8px;line-height:1.7">服务端（Cloudflare Worker + KV）<b>每 10 次上传自动留一份快照</b>（保留30份），下载的旧格式数据自动迁移。录入时自动保存+自动同步云端；断网时挂起，网络恢复自动补传。</p>
+    <p style="font-size:12px;color:#888;margin-top:8px;line-height:1.7">服务端（Cloudflare Worker + KV）<b>每 10 次上传自动留一份快照</b>（保留30份），下载的旧格式数据自动迁移。录入时自动保存+自动同步云端；断网时挂起，网络恢复自动补传。导出的分享链接有效期 <b>7 天</b>。</p>
   </div>
 </div>
 
@@ -382,7 +396,7 @@ td.na{color:#ccc;background:#f7f7f7}
           <tr>
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
-          </tr>          
+          </tr>
           <tr>
             <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
@@ -393,19 +407,20 @@ td.na{color:#ccc;background:#f7f7f7}
           </tr>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
           <tr>
-          <tr>
             <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">2.0</td><td class="pad">2.1</td><td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td>
           </tr>
           <tr>
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">100</td><td class="pad">110</td><td class="pad">118</td><td class="pad">125</td><td class="pad">132</td><td class="pad">140</td>
-          </tr>
+          <tr>
             <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
           </tr>
+          <tr>
             <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">40</td>
+          </tr>
           </tr>
         </tbody>
       </table>
@@ -421,6 +436,35 @@ td.na{color:#ccc;background:#f7f7f7}
     <div class="modal-h"><span>☁️ 云端历史快照</span><span class="x" onclick="closeHist()">×</span></div>
     <div class="modal-b" id="histBody"></div>
     <div class="modal-f"><button onclick="closeHist()">关闭</button></div>
+  </div>
+</div>
+
+<!-- 导出方式弹窗 -->
+<div class="modal-mask" id="expMask">
+  <div class="modal">
+    <div class="modal-h"><span>📤 导出方式</span><span class="x" onclick="closeExp()">×</span></div>
+    <div class="modal-b" id="expBody">
+      <div class="exp-warn" id="expWxWarn" style="display:none">
+        ⚠️ 当前在微信/QQ内置浏览器中，<b>直接下载可能被拦截</b>。建议用「复制下载链接」，然后点右上角「…」→「在浏览器打开」，粘贴链接即可下载。
+      </div>
+      <div class="exp-opt">
+        <div class="d"><b>⬇ 直接下载</b><small>保存文件到本机（浏览器环境）</small></div>
+        <button id="expDlBtn">下载</button>
+      </div>
+      <div class="exp-opt">
+        <div class="d"><b>🔗 复制下载链接</b><small>生成短链接，粘贴到系统浏览器打开即下载 JSON 文件（需已配置云端地址，链接有效期7天）</small></div>
+        <button class="blue" id="expLinkBtn">复制链接</button>
+      </div>
+      <div class="exp-opt" id="impLinkOpt">
+        <div class="d"><b>🔗 复制导入链接</b><small>无需云端。对方打开链接进入本工具，确认后自动导入数据</small></div>
+        <button class="orange" id="expImpBtn">复制链接</button>
+      </div>
+      <div id="expLinkArea" style="display:none">
+        <textarea class="link-box" id="expLinkText" readonly onclick="this.select()"></textarea>
+        <p style="font-size:11px;color:#888;margin-top:4px">如未自动复制，请长按上方文本框 → 全选 → 复制</p>
+      </div>
+    </div>
+    <div class="modal-f"><button onclick="closeExp()">关闭</button></div>
   </div>
 </div>
 
@@ -596,10 +640,25 @@ function sortGender(list){var o={'男':0,'女':1};return list.slice().sort(funct
 function todayStr(){var d=new Date(),p=function(n){return(n<10?'0':'')+n};return p(d.getMonth()+1)+'-'+p(d.getDate())}
 function needXLSX(){
   if(typeof XLSX==='undefined'){
-    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
+    alert('Excel 组件（XLSX）未能加载（网络受限）。\n\n可用替代方案：\n· 导出 → 用「完整备份(JSON)」或「复制下载链接」；\n· 导入 → 用「恢复数据备份(JSON)」；\n· 或换网络后刷新页面重试。');
     return true;
   }
   return false;
+}
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(t).then(function(){return true}).catch(function(){return fallbackCopy(t)});
+  }
+  return Promise.resolve(fallbackCopy(t));
+}
+function fallbackCopy(t){
+  var ta=document.createElement('textarea');
+  ta.value=t;ta.style.cssText='position:fixed;left:-9999px';
+  document.body.appendChild(ta);ta.select();
+  var ok=false;
+  try{ok=document.execCommand('copy')}catch(e){}
+  document.body.removeChild(ta);
+  return ok;
 }
 
 /* ================= 导航 ================= */
@@ -687,7 +746,7 @@ function showStuForm(b){
   document.getElementById('sBirth').style.display=b?'none':'';
   if(b){
     nm.rows=6;
-    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n张三 女\n李四 男\n王五\n\n（性别可省略，省略时用左侧选择的性别）';
+    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n冯诗瑶 女\n胡文俊 男\n李文超\n\n（性别可省略，省略时用左侧选择的性别）';
   }else{
     nm.rows=1;
     nm.placeholder='姓名';
@@ -994,6 +1053,92 @@ function fullscreen(){
   else if(document.exitFullscreen)document.exitFullscreen();
 }
 
+/* ================= 导出方式弹窗 ================= */
+var _expDownload=null,_expJson=null;
+function openExp(title,downloadFn,jsonStr){
+  _expDownload=downloadFn;
+  _expJson=jsonStr;
+  document.querySelector('#expMask .modal-h span').textContent='📤 '+title;
+  document.getElementById('expLinkArea').style.display='none';
+  document.getElementById('expWxWarn').style.display=(inWeChat()||inQQ())?'block':'none';
+  var dl=document.getElementById('expDlBtn');
+  dl.disabled=false;dl.textContent='下载';
+  if(needXLSX()&&downloadFn!==makeJsonBlob){dl.disabled=true;dl.textContent='(组件未加载)'}
+  var lb=document.getElementById('expLinkBtn');
+  lb.disabled=false;lb.textContent='复制链接';
+  document.getElementById('expMask').classList.add('show');
+}
+function closeExp(){document.getElementById('expMask').classList.remove('show')}
+document.getElementById('expDlBtn').addEventListener('click',function(){
+  if(_expDownload)_expDownload();
+  closeExp();
+});
+/* 复制下载链接：优先云端分享短链（浏览器打开直接下载文件），否则降级为导入链接 */
+document.getElementById('expLinkBtn').addEventListener('click',function(){
+  var btn=this;
+  if(!_expJson)return;
+  var u=apiUrl();
+  if(!u){
+    toast('未配置云端地址，已改用导入链接');
+    doImportLink();
+    return;
+  }
+  btn.disabled=true;btn.textContent='⏳ 生成中…';
+  fetch(u+(u.indexOf('?')>-1?'&':'?')+'action=share',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:_expJson
+  }).then(function(r){return r.json()})
+    .then(function(j){
+      btn.disabled=false;btn.textContent='复制链接';
+      if(j&&j.ok&&j.url){
+        showLink(j.url,'✅ 下载链接已复制。请粘贴到系统浏览器打开（微信内：右上角"…"→在浏览器打开），即可直接下载 JSON 文件。链接有效期7天。');
+      }else{
+        toast('生成分享链接失败，已改用导入链接');
+        doImportLink();
+      }
+    })
+    .catch(function(){
+      btn.disabled=false;btn.textContent='复制链接';
+      toast('云端不可达，已改用导入链接');
+      doImportLink();
+    });
+});
+/* 复制导入链接 */
+document.getElementById('expImpBtn').addEventListener('click',doImportLink);
+function doImportLink(){
+  var link=location.origin+location.pathname+'#share='+encodeURIComponent(_expJson||JSON.stringify(db));
+  showLink(link,'✅ 导入链接已复制。发送给他人，对方打开链接并确认后，数据自动导入其工具中。');
+}
+function showLink(link,msg){
+  var area=document.getElementById('expLinkArea');
+  document.getElementById('expLinkText').value=link;
+  area.style.display='block';
+  copyText(link).then(function(ok){
+    if(ok)toast(msg);
+    else toast('已生成链接，请长按文本框全选复制');
+  });
+}
+
+/* 打开页面时检测导入链接 #share= */
+(function(){
+  var h=location.hash||'';
+  var m=h.match(/#share=(.+)$/);
+  if(!m)return;
+  try{
+    var data=JSON.parse(decodeURIComponent(m[1]));
+    if(!data||typeof data!=='object'||(!data.classes&&!data.students))return;
+    setTimeout(function(){
+      if(!confirm('检测到链接中包含分享数据（'+((data.students||[]).length)+'名学生），是否导入并覆盖当前数据？（当前数据先留备份）'))return;
+      histSave();
+      if(data.sel){try{LS.set(SEL_KEY,JSON.stringify(data.sel))}catch(e2){}}
+      delete data.sel;
+      db=data;migrate();persist();
+      renderAll();
+      toast('✅ 分享数据已导入');
+      history.replaceState(null,'',location.pathname);
+    },400);
+  }catch(e){}
+})();
+
 /* ================= Excel 导入导出 ================= */
 function downloadTemplate(t){
   if(needXLSX())return;
@@ -1006,7 +1151,7 @@ function downloadTemplate(t){
   }
   XLSX.writeFile(wb,t===0?'学生名单模板.xlsx':'成绩模板.xlsx');
 }
-function exportStudents(){
+function makeStudentsXlsx(){
   if(needXLSX())return;
   var rows=[['年级','班级','姓名','性别','学号','出生日期']];
   db.students.forEach(function(s){
@@ -1017,7 +1162,7 @@ function exportStudents(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
   XLSX.writeFile(wb,'学生名单.xlsx');
 }
-function exportScores(){
+function makeScoresXlsx(){
   if(needXLSX())return;
   var hdr=['学号','姓名','班级','性别'],used={};
   db.classes.forEach(function(c){
@@ -1038,7 +1183,7 @@ function exportScores(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
   XLSX.writeFile(wb,'成绩记录.xlsx');
 }
-function exportClassStudents(){
+function makeClassStudentsXlsx(){
   if(needXLSX())return;
   var cid=document.getElementById('expClass').value;
   var c=clsById(cid);
@@ -1051,7 +1196,7 @@ function exportClassStudents(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'学生名单');
   XLSX.writeFile(wb,clsLabel(c)+'_学生名单.xlsx');
 }
-function exportClassScores(){
+function makeClassScoresXlsx(){
   if(needXLSX())return;
   var cid=document.getElementById('expClass').value;
   var c=clsById(cid);
@@ -1083,6 +1228,29 @@ function exportClassScores(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'成绩记录');
   XLSX.writeFile(wb,clsLabel(c)+'_成绩记录.xlsx');
 }
+function makeJsonBlob(){
+  var b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='体质测试数据备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+/* ---- 导出入口：全部走弹窗 ---- */
+function exportStudents(){openExp('导出学生名单',makeStudentsXlsx,JSON.stringify(db))}
+function exportScores(){openExp('导出成绩记录',makeScoresXlsx,JSON.stringify(db))}
+function exportJSON(){openExp('导出完整备份',makeJsonBlob,JSON.stringify(db))}
+function exportClassStudents(){
+  var c=clsById(document.getElementById('expClass').value);
+  if(!c){alert('请先创建班级');return}
+  openExp('导出 '+clsLabel(c)+' 名单',makeClassStudentsXlsx,JSON.stringify(db));
+}
+function exportClassScores(){
+  var c=clsById(document.getElementById('expClass').value);
+  if(!c){alert('请先创建班级');return}
+  openExp('导出 '+clsLabel(c)+' 成绩',makeClassScoresXlsx,JSON.stringify(db));
+}
+
 function handleImport(file,type){
   if(needXLSX()){this.value='';return}
   var fr=new FileReader();
@@ -1142,13 +1310,6 @@ document.getElementById('impJson').addEventListener('change',function(){
   };
   fr.readAsText(f);
 });
-function exportJSON(){
-  var b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(b);
-  a.download='体质测试数据备份_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-}
 function clearAll(){
   if(!confirm('⚠️ 确认清空全部数据？（会自动留历史备份）'))return;
   histSave();
@@ -1209,7 +1370,7 @@ function saveAndUpload(){
     .catch(function(e){toast('❌ 上传失败：'+e.message)});
 }
 
-/* ===== 云端历史（页面内弹窗，不再用原生 prompt） ===== */
+/* ===== 云端历史（页面内弹窗） ===== */
 function openHist(){document.getElementById('histMask').classList.add('show')}
 function closeHist(){document.getElementById('histMask').classList.remove('show')}
 function histBody(html){document.getElementById('histBody').innerHTML=html}
@@ -1232,7 +1393,7 @@ function cloudHistory(){
       if(!j||typeof j!=='object'){
         histBody('<div class="snap-empty">❌ 云端返回的不是 JSON（HTTP '+res.status+'）</div>'+
                  '<div class="snap-raw">'+esc(String(res.text||'').slice(0,600)||'（空响应）')+'</div>'+
-                 '<p style="color:#a00;margin-top:8px">请确认 Worker 已部署为最新版（含 /ping 与 action=list 支持）。</p>');
+                 '<p style="color:#a00;margin-top:8px">请确认 Worker 已部署为最新版。</p>');
         return;
       }
       var hist=null;
@@ -1241,10 +1402,9 @@ function cloudHistory(){
       else if(Array.isArray(j.list))hist=j.list;
       if(!hist||!hist.length){
         histBody('<div class="snap-empty">云端暂无历史快照</div>'+
-                 '<p style="color:#888">说明：每 <b>10 次</b>上传自动留一份快照（保留30份）。当前累计上传：'+
+                 '<p style="color:#888">每 <b>10 次</b>上传自动留一份快照（保留30份）。当前累计上传：'+
                  (j.uploads!=null?j.uploads:'未知')+' 次，距下次快照还差 '+
-                 (j.nextSnapshotIn!=null?j.nextSnapshotIn:'?')+' 次。</p>'+
-                 (hist===null?'<div class="snap-raw">'+esc(JSON.stringify(j).slice(0,400))+'</div>':''));
+                 (j.nextSnapshotIn!=null?j.nextSnapshotIn:'?')+' 次。</p>');
         return;
       }
       var meta=(j.uploads!=null)?('<p style="color:#888;margin-bottom:8px">累计上传 '+j.uploads+' 次 · 距下次快照还差 '+j.nextSnapshotIn+' 次</p>'):'';
@@ -1256,7 +1416,6 @@ function cloudHistory(){
            '<button data-ts="'+(ts!=null?ts:i)+'">恢复</button></div>';
       });
       histBody(h);
-      /* 绑定恢复按钮 */
       document.querySelectorAll('#histBody .snap-item button').forEach(function(btn){
         btn.addEventListener('click',function(){restoreSnap(btn.dataset.ts)});
       });
