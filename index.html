@@ -245,7 +245,7 @@ td.na{color:#ccc;background:#f7f7f7}
   <h2>☁️ 云端存储</h2>
   <div class="card">
     <div class="row">
-      <input id="apiUrl" placeholder="https://ticedata.990225.xyz/" style="flex:1;min-width:240px">
+      <input id="apiUrl" placeholder="https://data.abc.com/" style="flex:1;min-width:240px">
       <button class="btn orange" onclick="saveApiUrl()">保存地址</button>
     </div>
     <div class="row">
@@ -391,14 +391,6 @@ td.na{color:#ccc;background:#f7f7f7}
         <tbody>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#e8f5e9;color:#2e7d32;padding:5px 8px"> 男 生</td></tr>
           <tr>
-            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
-          </tr>
-          <tr>
-            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">35</td>
-          </tr>
-          <tr>
             <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
           </tr>
@@ -406,15 +398,15 @@ td.na{color:#ccc;background:#f7f7f7}
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
           </tr>
-          <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
           <tr>
             <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
+            <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
           </tr>
           <tr>
             <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">41</td><td class="pad">40</td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">35</td>
           </tr>
+          <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
           <tr>
             <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">2.0</td><td class="pad">2.1</td><td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td>
@@ -422,6 +414,14 @@ td.na{color:#ccc;background:#f7f7f7}
           <tr>
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">100</td><td class="pad">110</td><td class="pad">118</td><td class="pad">125</td><td class="pad">132</td><td class="pad">140</td>
+          </tr>
+          <tr>
+            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
+          </tr>
+          <tr>
+            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">40</td>
           </tr>
         </tbody>
       </table>
@@ -747,7 +747,7 @@ function showStuForm(b){
   document.getElementById('sBirth').style.display=b?'none':'';
   if(b){
     nm.rows=6;
-    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n冯诗瑶 女\n胡文俊 男\n李文超\n\n（性别可省略，省略时用左侧选择的性别）';
+    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n张三 女\n李四 男\n王五\n\n（性别可省略，省略时用左侧选择的性别）';
   }else{
     nm.rows=1;
     nm.placeholder='姓名';
