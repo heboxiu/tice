@@ -211,7 +211,7 @@ td.na{color:#ccc;background:#f7f7f7}
     <button class="btn" onclick="fullscreen()">⛶ 全屏</button>
     <button class="btn green" onclick="saveAndUpload()">💾 保存并上传</button>
   </div>
-  <div class="hint">💡 名单按<b>男生组/女生组</b>分组；<b>姓名列与表头固定</b>；添加项目时可用<b>范围选择</b>指定生效对象：<b>仅男生</b>添加后女生侧暂为空白，之后再为女生添加同项即生效并记录女生侧日期（男/女日期独立）；重复添加自动编号 <b>(2)(3)(4)…</b>；点“缺”标记缺勤（红，<b>锁定录入</b>）；女生可点“M”标记经期（玫红角标，<b>不锁定，可与成绩同时存在</b>，与缺勤互斥）；身高+体重自动算 BMI；<b>输入后自动保存本机并同步云端</b>（未配置云端地址时仅存本机）。</div>
+  <div class="hint">💡 名单按<b>男生组/女生组</b>分组；<b>姓名列与表头固定</b>；添加项目时可用<b>范围选择</b>指定生效对象：<b>仅男生</b>添加后女生侧暂为空白，之后再为女生添加同项即生效并记录女生侧日期（男/女日期独立）；重复添加普通项目自动编号 <b>(2)(3)(4)…</b>；<b>考勤</b>等考勤类项目<b>每次添加都生成新列</b>（考勤→考勤(2)→考勤(3)…），适合逐日记录；点“缺”标记缺勤（红，<b>锁定录入</b>）；女生可点“M”标记经期（玫红角标，<b>不锁定，可与成绩同时存在</b>，与缺勤互斥）；身高+体重自动算 BMI；<b>输入后自动保存本机并同步云端</b>（未配置云端地址时仅存本机）。</div>
   <div class="score-wrap"><table id="scoreTable"></table></div>
 </div>
 
@@ -245,7 +245,7 @@ td.na{color:#ccc;background:#f7f7f7}
   <h2>☁️ 云端存储</h2>
   <div class="card">
     <div class="row">
-      <input id="apiUrl" placeholder="https://data.abc.com/" style="flex:1;min-width:240px">
+      <input id="apiUrl" placeholder="https://ticedata.990225.xyz/" style="flex:1;min-width:240px">
       <button class="btn orange" onclick="saveApiUrl()">保存地址</button>
     </div>
     <div class="row">
@@ -391,14 +391,6 @@ td.na{color:#ccc;background:#f7f7f7}
         <tbody>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#e8f5e9;color:#2e7d32;padding:5px 8px"> 男 生</td></tr>
           <tr>
-            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
-            <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
-          </tr>
-          <tr>
-            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
-            <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
-          </tr>
-          <tr>
             <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.0</td><td class="pad">18.0</td><td class="pad">17.2</td><td class="pad">16.5</td>
           </tr>
@@ -406,7 +398,23 @@ td.na{color:#ccc;background:#f7f7f7}
             <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
             <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">35</td>
           </tr>
+          <tr>
+            <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td><td class="pad">2.3</td><td class="pad">2.7</td>
+          </tr>
+          <tr>
+            <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
+            <td class="pad">110</td><td class="pad">120</td><td class="pad">130</td><td class="pad">140</td><td class="pad">150</td><td class="pad">160</td>
+          </tr>
           <tr><td colspan="7" style="text-align:left;font-weight:bold;background:#fdeef5;color:#d81b60;padding:5px 8px"> 女 生</td></tr>
+          <tr>
+            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
+          </tr>
+          <tr>
+            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
+            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">41</td><td class="pad">40</td>
+          </tr>
           <tr>
             <td class="pad">助跑跳远（米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">2.0</td><td class="pad">2.1</td><td class="pad">2.2</td><td class="pad">2.3</td><td class="pad">2.4</td><td class="pad">2.5</td>
@@ -414,14 +422,6 @@ td.na{color:#ccc;background:#f7f7f7}
           <tr>
             <td class="pad">立定跳远（厘米）<br><span style="font-weight:normal;font-size:10px">≥达标</span></td>
             <td class="pad">100</td><td class="pad">110</td><td class="pad">118</td><td class="pad">125</td><td class="pad">132</td><td class="pad">140</td>
-          </tr>
-          <tr>
-            <td class="pad">100米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">23.0</td><td class="pad">22.0</td><td class="pad">21.0</td><td class="pad">20.0</td><td class="pad">19.2</td><td class="pad">18.5</td>
-          </tr>
-          <tr>
-            <td class="pad">200米跑（秒）<br><span style="font-weight:normal;font-size:10px">≤达标</span></td>
-            <td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">/</td><td class="pad">40</td>
           </tr>
         </tbody>
       </table>
@@ -520,6 +520,12 @@ var LS={
 var DB_KEY='pe_tool_v1', SEL_KEY='pe_sel_v1', API_KEY='pe_api_url';
 var GR=['','一','二','三','四','五','六'];
 var ITEM_MAP={'run50':'50米跑','rope':'1分钟跳绳','run50x8':'50米×8往返跑','run50x8_2':'50米×8往返跑(2)','abs':'1分钟仰卧起坐','height':'身高','weight':'体重','lung':'肺活量','sitreach':'坐位体前屈'};
+
+/* 多列项目：每次添加都生成新列，自动编号 考勤(2)(3)(4)… */
+var MULTI_ITEMS=['考勤'];
+function isMultiItem(name){
+  return MULTI_ITEMS.some(function(u){return name.indexOf(u)>-1});
+}
 
 function emptyDB(){return {classes:[],students:[],scores:{},customItems:[]}}
 
@@ -747,7 +753,7 @@ function showStuForm(b){
   document.getElementById('sBirth').style.display=b?'none':'';
   if(b){
     nm.rows=6;
-    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n张三 女\n李四 男\n王五\n\n（性别可省略，省略时用左侧选择的性别）';
+    nm.placeholder='每行一个学生，直接粘贴纯文本即可\n例：\n冯诗瑶 女\n胡文俊 男\n李文超\n\n（性别可省略，省略时用左侧选择的性别）';
   }else{
     nm.rows=1;
     nm.placeholder='姓名';
@@ -871,6 +877,7 @@ function refreshItemSelect(){
   h+='<option value="__add__">➕ 新增自定义项目…</option>';
   sel.innerHTML=h;sel.value='';
 }
+
 function onItemSelect(sel){
   if(sel.value==='__add__'){
     var v=prompt('输入自定义项目名称（可多个，逗号分隔）：');
@@ -895,29 +902,49 @@ function onItemSelect(sel){
     if(!col && (c.name===base || c.name.replace(/\(\d+\)$/,'')===base))col=c;
   });
 
-  if(col){
-    var d=todayStr(),changed=false;
-    if(scope==='男'&&!col.dateM){col.dateM=d;changed=true}
-    else if(scope==='女'&&!col.dateF){col.dateF=d;changed=true}
-    else if(scope==='both'){
-      if(!col.dateM){col.dateM=d;changed=true}
-      if(!col.dateF){col.dateF=d;changed=true}
-    }
+  /* ★ 多列项目（如考勤）：不做"已存在"判断，每次都新增一列并自动编号 */
+  if(isMultiItem(base)){
+    var cnt=0;
+    s[cid].forEach(function(c){
+      if(c.name===base || c.name.replace(/\(\d+\)$/,'')===base)cnt++;
+    });
+    var disp=(cnt>0)?base+'('+(cnt+1)+')':base;
+    var d=todayStr();
+    var nc={name:disp,k:disp+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
+    if(scope==='男')nc.dateM=d;
+    else if(scope==='女')nc.dateF=d;
+    else{nc.dateM=d;nc.dateF=d}
+    s[cid].push(nc);
     setSel(s);refreshItemSelect();renderScore();
-    if(!changed)toast('ℹ️ 该项目此侧日期已存在，未重复添加');
-    else toast('✅ 已为'+(scope==='both'?'全部学生':scope+'生')+'启用「'+base+'」，日期 '+d);
+    toast('✅ 已新增「'+disp+'」列，日期 '+d);
     return;
   }
 
+  /* 普通项目：已存在则补充对应侧日期，不新增列 */
+  if(col){
+    var d2=todayStr(),changed=false;
+    if(scope==='男'&&!col.dateM){col.dateM=d2;changed=true}
+    else if(scope==='女'&&!col.dateF){col.dateF=d2;changed=true}
+    else if(scope==='both'){
+      if(!col.dateM){col.dateM=d2;changed=true}
+      if(!col.dateF){col.dateF=d2;changed=true}
+    }
+    setSel(s);refreshItemSelect();renderScore();
+    if(!changed)toast('ℹ️ 该项目此侧日期已存在，未重复添加');
+    else toast('✅ 已为'+(scope==='both'?'全部学生':scope+'生')+'启用「'+base+'」，日期 '+d2);
+    return;
+  }
+
+  /* 普通项目首次添加 */
   var n=s[cid].filter(function(c){
     return c.name===base || c.name.replace(/\(\d+\)$/,'')===base;
   }).length;
-  var disp=(n>0)?base+'('+(n+1)+')':base;
-  var d2=todayStr();
-  var col2={name:disp,k:disp+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
-  if(scope==='男')col2.dateM=d2;
-  else if(scope==='女')col2.dateF=d2;
-  else{col2.dateM=d2;col2.dateF=d2}
+  var disp2=(n>0)?base+'('+(n+1)+')':base;
+  var d3=todayStr();
+  var col2={name:disp2,k:disp2+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
+  if(scope==='男')col2.dateM=d3;
+  else if(scope==='女')col2.dateF=d3;
+  else{col2.dateM=d3;col2.dateF=d3}
   s[cid].push(col2);
 
   setSel(s);refreshItemSelect();renderScore();
