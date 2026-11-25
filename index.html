@@ -90,6 +90,7 @@ td input:disabled{background:#f0f0f0;color:#bbb}
 #scoreTable tbody tr:hover td.name-col{background:#eef5ff}
 .name-col{min-width:86px}
 td.na{color:#ccc;background:#f7f7f7}
+.col-name{cursor:pointer;text-decoration:underline dotted}
 .m-flag{display:inline-block;font-size:9px;color:#fff;background:#c2185b;border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:1px}
 
 .girl{color:#e0568c}.boy{color:#2c7be5}
@@ -211,7 +212,7 @@ td.na{color:#ccc;background:#f7f7f7}
     <button class="btn" onclick="fullscreen()">⛶ 全屏</button>
     <button class="btn green" onclick="saveAndUpload()">💾 保存并上传</button>
   </div>
-  <div class="hint">💡 名单按<b>男生组/女生组</b>分组；<b>姓名列与表头固定</b>；添加项目时可用<b>范围选择</b>指定生效对象：<b>仅男生</b>添加后女生侧暂为空白，之后再为女生添加同项即生效并记录女生侧日期（男/女日期独立）；重复添加普通项目自动编号 <b>(2)(3)(4)…</b>；<b>考勤</b>等考勤类项目<b>每次添加都生成新列</b>（考勤→考勤(2)→考勤(3)…），适合逐日记录；点“缺”标记缺勤（红，<b>锁定录入</b>）；女生可点“M”标记经期（玫红角标，<b>不锁定，可与成绩同时存在</b>，与缺勤互斥）；身高+体重自动算 BMI；<b>输入后自动保存本机并同步云端</b>（未配置云端地址时仅存本机）。</div>
+  <div class="hint">💡 名单按<b>男生组/女生组</b>分组；<b>姓名列与表头固定</b>；每次从下拉选择项目都会<b>新增一列</b>并自动编号（50米跑 → 50米跑(2)…）；通过<b>范围选择</b>控制该列对男生侧/女生侧/双侧生效（男/女日期独立）；<b>点击表头项目名可重命名列</b>（成绩不受影响）；点“缺”标记缺勤（红，<b>锁定录入</b>）；女生可点“M”标记经期（玫红角标，<b>不锁定，可与成绩同时存在</b>，与缺勤互斥）；身高+体重自动算 BMI；<b>输入后自动保存本机并同步云端</b>（未配置云端地址时仅存本机）。</div>
   <div class="score-wrap"><table id="scoreTable"></table></div>
 </div>
 
@@ -520,12 +521,6 @@ var LS={
 var DB_KEY='pe_tool_v1', SEL_KEY='pe_sel_v1', API_KEY='pe_api_url';
 var GR=['','一','二','三','四','五','六'];
 var ITEM_MAP={'run50':'50米跑','rope':'1分钟跳绳','run50x8':'50米×8往返跑','run50x8_2':'50米×8往返跑(2)','abs':'1分钟仰卧起坐','height':'身高','weight':'体重','lung':'肺活量','sitreach':'坐位体前屈'};
-
-/* 多列项目：每次添加都生成新列，自动编号 考勤(2)(3)(4)… */
-var MULTI_ITEMS=['考勤'];
-function isMultiItem(name){
-  return MULTI_ITEMS.some(function(u){return name.indexOf(u)>-1});
-}
 
 function emptyDB(){return {classes:[],students:[],scores:{},customItems:[]}}
 
@@ -897,61 +892,41 @@ function onItemSelect(sel){
   s[cid]=s[cid]||[];
 
   var base=val.replace(/\(\d+\)$/,'');
-  var col=null;
+
+  /* ★ 每次添加都生成新列，按同名基础名计数编号 */
+  var cnt=0;
   s[cid].forEach(function(c){
-    if(!col && (c.name===base || c.name.replace(/\(\d+\)$/,'')===base))col=c;
+    if(c.name===base || c.name.replace(/\(\d+\)$/,'')===base)cnt++;
   });
-
-  /* ★ 多列项目（如考勤）：不做"已存在"判断，每次都新增一列并自动编号 */
-  if(isMultiItem(base)){
-    var cnt=0;
-    s[cid].forEach(function(c){
-      if(c.name===base || c.name.replace(/\(\d+\)$/,'')===base)cnt++;
-    });
-    var disp=(cnt>0)?base+'('+(cnt+1)+')':base;
-    var d=todayStr();
-    var nc={name:disp,k:disp+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
-    if(scope==='男')nc.dateM=d;
-    else if(scope==='女')nc.dateF=d;
-    else{nc.dateM=d;nc.dateF=d}
-    s[cid].push(nc);
-    setSel(s);refreshItemSelect();renderScore();
-    toast('✅ 已新增「'+disp+'」列，日期 '+d);
-    return;
-  }
-
-  /* 普通项目：已存在则补充对应侧日期，不新增列 */
-  if(col){
-    var d2=todayStr(),changed=false;
-    if(scope==='男'&&!col.dateM){col.dateM=d2;changed=true}
-    else if(scope==='女'&&!col.dateF){col.dateF=d2;changed=true}
-    else if(scope==='both'){
-      if(!col.dateM){col.dateM=d2;changed=true}
-      if(!col.dateF){col.dateF=d2;changed=true}
-    }
-    setSel(s);refreshItemSelect();renderScore();
-    if(!changed)toast('ℹ️ 该项目此侧日期已存在，未重复添加');
-    else toast('✅ 已为'+(scope==='both'?'全部学生':scope+'生')+'启用「'+base+'」，日期 '+d2);
-    return;
-  }
-
-  /* 普通项目首次添加 */
-  var n=s[cid].filter(function(c){
-    return c.name===base || c.name.replace(/\(\d+\)$/,'')===base;
-  }).length;
-  var disp2=(n>0)?base+'('+(n+1)+')':base;
-  var d3=todayStr();
-  var col2={name:disp2,k:disp2+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
-  if(scope==='男')col2.dateM=d3;
-  else if(scope==='女')col2.dateF=d3;
-  else{col2.dateM=d3;col2.dateF=d3}
-  s[cid].push(col2);
+  var disp=(cnt>0)?base+'('+(cnt+1)+')':base;
+  var d=todayStr();
+  var nc={name:disp,k:disp+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),dateM:'',dateF:''};
+  if(scope==='男')nc.dateM=d;
+  else if(scope==='女')nc.dateF=d;
+  else{nc.dateM=d;nc.dateF=d}
+  s[cid].push(nc);
 
   setSel(s);refreshItemSelect();renderScore();
+  toast('✅ 已新增「'+disp+'」列，日期 '+d);
 }
 function removeCol(cid,idx){
   var s=getSel();if(!s[cid])return;
   s[cid].splice(idx,1);setSel(s);renderScore();
+}
+/* ★ 点击表头项目名重命名列（数据键 k 不变，成绩不受影响） */
+function renameCol(cid,idx){
+  var s=getSel();if(!s[cid]||!s[cid][idx])return;
+  var cur=s[cid][idx].name;
+  var nv=prompt('修改列名称（当前：'+cur+'）：',cur);
+  if(nv===null)return;
+  nv=nv.trim();
+  if(!nv){toast('名称不能为空');return}
+  if(nv===cur)return;
+  var dup=s[cid].some(function(c,i){return i!==idx&&c.name===nv});
+  if(dup&&!confirm('已存在同名列「'+nv+'」，仍要改名？'))return;
+  s[cid][idx].name=nv;
+  setSel(s);renderScore();
+  toast('✅ 已改名为「'+nv+'」');
 }
 
 function renderScore(){
@@ -969,7 +944,7 @@ function renderScore(){
     var dt='';
     if(c.dateM&&c.dateF&&c.dateM!==c.dateF)dt='<br><span style="color:#9ec5f8;font-size:11px;font-weight:normal">男'+esc(c.dateM)+' / 女'+esc(c.dateF)+'</span>';
     else if(c.dateM||c.dateF)dt='<br><span style="color:#9ec5f8;font-size:11px;font-weight:normal">'+esc(c.dateM||c.dateF)+'</span>';
-    h+='<th>'+esc(c.name)+dt+
+    h+='<th><span class="col-name" title="点击修改名称" onclick="renameCol(\''+cid+'\','+i+')">'+esc(c.name)+'</span>'+dt+
        '<span class="del-col" onclick="removeCol(\''+cid+'\','+i+')">×</span></th>';
   });
   h+='</tr></thead><tbody>';
